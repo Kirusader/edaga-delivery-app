@@ -48,9 +48,10 @@ const theme = createTheme({
       textDecoration: "none",
     },
     h3: {
-      fontFamily: "Pacifico",
-      fontSize: "2.5rem",
-      color: arcBlue,
+      fontFamily: "Roboto",
+      fontSize: "2rem",
+      color: "#fff",
+      fontWeight: 700,
     },
     h4: {
       fontFamily: "Raleway",
@@ -64,9 +65,11 @@ const theme = createTheme({
       color: "#000",
     },
     subtitle1: {
-      fontSize: "1.25rem",
-      fontWeight: 300,
+      textTransform: "none",
+      fontSize: "0.8rem",
+      fontWeight: 400,
       color: "#fff",
+      "&:hover": { color: arcOrange },
     },
     footer: {
       color: "#000",
