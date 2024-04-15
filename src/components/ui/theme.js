@@ -42,22 +42,25 @@ const theme = createTheme({
       fontFamily: "Roboto",
       fontWeight: 700,
       fontSize: "2.5rem",
+      marginBottom: "3rem",
+      marginTop: "2rem",
       color: "#000",
       lineHeight: 1.5,
-      marginLeft: "2rem",
       textDecoration: "none",
+      textTransform: "none",
     },
     h3: {
       fontFamily: "Roboto",
-      fontSize: "2rem",
+      fontSize: "1.5rem",
       color: "#fff",
-      fontWeight: 700,
+      fontWeight: 600,
     },
     h4: {
-      fontFamily: "Raleway",
-      fontSize: "1.75rem",
-      color: arcBlue,
-      fontWeight: 700,
+      fontFamily: "Roboto",
+      fontSize: "1.5rem",
+      color: "#000",
+      fontWeight: 600,
+      textTransform: "none",
     },
     h6: {
       fontWeight: 500,
@@ -80,7 +83,7 @@ const theme = createTheme({
     },
     subtitle2: {
       color: "#000",
-      fontSize: "0.78rem",
+      fontSize: "1.2rem",
       fontFamily: "Roboto",
       textTransform: "none",
       fontWeight: 400,
@@ -110,7 +113,7 @@ const theme = createTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: arcBlue,
+          color: "#000",
           fontSize: "1rem",
         },
       },
@@ -135,16 +138,16 @@ const theme = createTheme({
     MuiInput: {
       styleOverrides: {
         root: {
-          color: arcGrey,
+          color: "#000",
           fontWeight: 300,
         },
         underline: {
           "&:before": {
-            borderBottom: `2px solid ${arcBlue}`,
+            borderBottom: `2px solid ${"#000"}`,
           },
           "&:hover:not(.Mui-disabled):not(.Mui-focused):not(.Mui-error):before":
             {
-              borderBottom: `2px solid ${arcBlue}`,
+              borderBottom: `2px solid ${"#000"}`,
             },
         },
       },

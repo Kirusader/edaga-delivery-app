@@ -7,6 +7,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { Grid, Box, Typography, Paper, Button } from "@mui/material";
 import { useTheme, styled } from "@mui/material/styles";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import ButtonArrow from "./ui/ButtonArrow";
 import forwardArrow from "../assets/forwardArrow.svg";
 import backArrow from "../assets/backArrow.svg";
@@ -131,6 +132,7 @@ const productCategories = [
   },
 ];
 function LandingPage() {
+  const navigate = useNavigate();
   const theme = useTheme();
 
   return (
@@ -203,8 +205,7 @@ function LandingPage() {
                 {product.description}
               </Typography>
               <StyledOrderNowButton
-                component={Link}
-                to={product.link}
+                onClick={() => navigate(product.link)}
                 variant="outlined">
                 <span style={{ marginRight: 10 }}>Order now</span>
                 <ButtonArrow
@@ -225,7 +226,7 @@ function LandingPage() {
           alignItems={"center"}
           justifyContent={"center"}>
           <Grid item sm>
-            <Button component={Link} to="/card">
+            <Button onClick={() => navigate("/card")}>
               <img
                 src={CardImg}
                 style={{ width: 400, height: 400, borderRadius: 20 }}
@@ -259,8 +260,7 @@ function LandingPage() {
               </Grid>
               <Grid item>
                 <StyledOrderNowButton
-                  component={Link}
-                  to="/card"
+                  onClick={() => navigate("/card")}
                   variant="outlined">
                   <span style={{ marginRight: 10 }}>Order now</span>
                   <ButtonArrow
@@ -303,8 +303,7 @@ function LandingPage() {
               </Grid>
               <Grid item>
                 <StyledOrderNowButton
-                  component={Link}
-                  to="/food"
+                  onClick={() => navigate("/food")}
                   variant="outlined">
                   <span style={{ marginRight: 10 }}>Order now</span>
                   <ButtonArrow
@@ -317,7 +316,7 @@ function LandingPage() {
             </Grid>
           </Grid>
           <Grid item>
-            <Button component={Link} to="/food">
+            <Button onClick={() => navigate("/food")}>
               <img
                 src={CheckenImg}
                 style={{ width: 400, height: 400, borderRadius: 20 }}
@@ -334,7 +333,7 @@ function LandingPage() {
           alignItems={"center"}
           spacing={3}>
           <Grid item>
-            <Button component={Link} to="/trackorder">
+            <Button onClick={() => navigate("/trackorder")}>
               <img
                 src={TrackOrderImg}
                 style={{ width: 400, height: 400, borderRadius: 20 }}
@@ -362,8 +361,7 @@ function LandingPage() {
               </Grid>
               <Grid item>
                 <StyledOrderNowButton
-                  component={Link}
-                  to="/trackorder"
+                  onClick={() => navigate("/trackorder")}
                   variant="outlined"
                   sx={{ width: 180 }}>
                   <span style={{ marginRight: 10 }}>Check location</span>
@@ -408,8 +406,7 @@ function LandingPage() {
               </Grid>
               <Grid item>
                 <StyledOrderNowButton
-                  component={Link}
-                  to="/registercompany"
+                  onClick={() => navigate("/registercompany")}
                   variant="outlined"
                   sx={{ width: 180 }}>
                   <span style={{ marginRight: 10 }}>Get started</span>
@@ -423,7 +420,7 @@ function LandingPage() {
             </Grid>
           </Grid>
           <Grid item>
-            <Button component={Link} to="/registercompany">
+            <Button onClick={() => navigate("/registercompany")}>
               <img
                 src={RegisterCompanyImg}
                 style={{ width: 400, height: 400, borderRadius: 20 }}
@@ -440,7 +437,7 @@ function LandingPage() {
           alignItems={"center"}
           spacing={3}>
           <Grid item>
-            <Button component={Link} to="/riderapply">
+            <Button onClick={() => navigate("/riderapply")}>
               <img
                 src={RiderImg}
                 style={{ width: 400, height: 400, borderRadius: 20 }}
@@ -468,8 +465,7 @@ function LandingPage() {
               </Grid>
               <Grid item>
                 <StyledOrderNowButton
-                  component={Link}
-                  to="/riderapply"
+                  onClick={() => navigate("/riderapply")}
                   variant="outlined"
                   sx={{ width: 180 }}>
                   <span style={{ marginRight: 10 }}>Apply now</span>

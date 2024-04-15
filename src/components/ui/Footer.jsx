@@ -18,13 +18,13 @@ const StyledIconButton = styled(IconButton)(({ theme }) => ({
   height: 80,
 }));
 const categories = [
-  { menu: "Food", link: "/food" },
-  { menu: "Stationary", link: "/stationary" },
   { menu: "Bed & Bath", link: "/bedbath" },
-  { menu: "Electronics & Home Appliance", link: "/electronicsappliance" },
   { menu: "Beverage", link: "/beverages" },
-  { menu: "Personal Care", link: "/personalcare" },
+  { menu: "Electronics & Home Appliance", link: "/electronicsappliance" },
+  { menu: "Food", link: "/food" },
   { menu: "Home Care", link: "/homecare" },
+  { menu: "Personal Care", link: "/personalcare" },
+  { menu: "Stationary", link: "/stationary" },
 ];
 export default function Footer() {
   return (
@@ -169,8 +169,8 @@ export default function Footer() {
                   <StyledIconButton
                     rel="noopener noreferrer"
                     target="_blank"
-                    component={"a"}
-                    href="http://www.twitter.com">
+                    component={Link}
+                    to="http://www.twitter.com">
                     <Twitter />
                   </StyledIconButton>
                 </Grid>
@@ -178,8 +178,8 @@ export default function Footer() {
                   <StyledIconButton
                     rel="noopener noreferrer"
                     target="_blank"
-                    component={"a"}
-                    href="http://www.facebook.com">
+                    component={Link}
+                    to="http://www.facebook.com">
                     <FacebookIcon />
                   </StyledIconButton>
                 </Grid>
@@ -187,8 +187,8 @@ export default function Footer() {
                   <StyledIconButton
                     rel="noopener noreferrer"
                     target="_blank"
-                    component={"a"}
-                    href="http://www.tiktok.com">
+                    component={Link}
+                    to="http://www.tiktok.com">
                     <MusicNote />
                   </StyledIconButton>
                 </Grid>
@@ -196,8 +196,8 @@ export default function Footer() {
                   <StyledIconButton
                     rel="noopener noreferrer"
                     target="_blank"
-                    component={"a"}
-                    href="http://www.instagram.com">
+                    component={Link}
+                    to="http://www.instagram.com">
                     <Instagram />
                   </StyledIconButton>
                 </Grid>
@@ -224,8 +224,8 @@ export default function Footer() {
                   <Button
                     rel="noopener noreferrer"
                     target="_blank"
-                    component={"a"}
-                    href="https://play.google.com">
+                    component={Link}
+                    to="https://play.google.com">
                     <img
                       src={PlayStoreImg}
                       alt="play store"
@@ -237,8 +237,8 @@ export default function Footer() {
                   <Button
                     rel="noopener noreferrer"
                     target="_blank"
-                    component={"a"}
-                    href="https://www.apple.com/app-store">
+                    component={Link}
+                    to="https://www.apple.com/app-store">
                     <img
                       src={AppStoreImg}
                       alt="play store"
