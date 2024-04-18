@@ -1,5 +1,5 @@
 /** @format */
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import {
   AppBar,
   Toolbar,
@@ -23,6 +23,9 @@ import {
   DialogTitle,
   Grid,
   TextField,
+  Snackbar,
+  Avatar,
+  ListItemAvatar,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -37,7 +40,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebaseConfig";
 import { useAuthState } from "react-firebase-hooks/auth";
 import CartContext from "../../store/CartContext";
-import { query, collection, getDocs, where, addDoc } from "firebase/firestore";
+import {
+  doc,
+  query,
+  collection,
+  getDocs,
+  where,
+  addDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { currencyFormatter } from "../../util/formatting";
 import closeButton from "../../assets/closebutton.svg";
 const StyledTab = styled(Tab)(({ theme }) => ({
@@ -136,7 +147,15 @@ export default function Header() {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
-  const [shipingAddress, setShippingAddress] = useState({
+  const [allProducts, setAllProducts] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    backgroundColor: "",
+  });
+  const [shippingAddress, setShippingAddress] = useState({
+    cardNumber: "",
     phone: "",
     orderNote: "",
     street: "",
@@ -146,6 +165,7 @@ export default function Header() {
   });
   const [user, loading, error] = useAuthState(auth);
   const navigate = useNavigate();
+  const searchResultsRef = useRef(null);
   const cartCtxt = useContext(CartContext);
   const handleTabChange = (event, newValue) => {
     setValue(newValue);
@@ -169,7 +189,7 @@ export default function Header() {
       return data;
     } catch (err) {
       console.error(err);
-      console.log("An error occured while fetching rooms data");
+      console.log("An error occured while fetching data");
     }
   };
   const handleShippingAddressChange = (event) => {
@@ -180,27 +200,114 @@ export default function Header() {
     }));
   };
 
-  const handleSubmitOrder = async () => {
-    const userData = await fetchUserData();
-    try {
-      const docRef = await addDoc(collection(db, "orders"), {
-        name: userData.name,
-        email: userData.email,
-        phone: shipingAddress.phone,
-        orderNote: shipingAddress.orderNote,
-        street: shipingAddress.street,
-        city: shipingAddress.city,
-        postalCode: shipingAddress.postalCode,
-        country: shipingAddress.country,
-        items: cartCtxt.items,
-        total: cartTotal,
-        createdAt: new Date(),
+  useEffect(() => {
+    const collectionNames = [
+      "bedbath",
+      "beverage",
+      "electrical",
+      "homecare",
+      "food",
+      "personalcare",
+      "stationary",
+    ];
+    async function combineData() {
+      let allData = [];
+      for (const name of collectionNames) {
+        const querySnapshot = await getDocs(collection(db, name));
+        const collectionData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        allData.push(...collectionData);
+      }
+      setAllProducts(allData);
+    }
+    combineData();
+  }, []);
+  const searchResults = allProducts.filter((product) =>
+    product.description.toLowerCase().includes(searchText.toLowerCase())
+  );
+  const handleNavigation = (product) => {
+    if (window.location.href.includes("/payment")) {
+      swal({
+        title: "Are you sure?",
+        text: "Your transaction is not completed!",
+        icon: "warning",
+        buttons: ["Cancel", "Yes"],
+      }).then((willNavigate) => {
+        if (willNavigate) {
+          navigate(`/product/${product.id}`);
+        }
       });
-      console.log("Document written with ID: ", docRef.id);
-      cartCtxt.clearCart();
-      alert(`Order has been placed. Your order number is ${docRef.id}`);
+    } else {
+      navigate(`/product/${product.id}`);
+      setSearchText("");
+    }
+  };
+  const handleSubmitOrder = async () => {
+    try {
+      const userData = await fetchUserData();
+      const cardsQuery = query(
+        collection(db, "cards"),
+        where("cardnumber", "==", shippingAddress.cardNumber)
+      );
+      const cardsSnapshot = await getDocs(cardsQuery);
+
+      if (!cardsSnapshot.empty) {
+        const cardData = cardsSnapshot.docs[0].data();
+        const cardRef = doc(db, "cards", cardsSnapshot.docs[0].id);
+        const newBalance = cardData.balance - cartTotal;
+
+        if (cardData.balance >= cartTotal) {
+          await updateDoc(cardRef, {
+            balance: newBalance,
+            active: newBalance > 0,
+          });
+          const orderRef = await addDoc(collection(db, "orders"), {
+            uid: user?.uid,
+            name: userData.name,
+            email: userData.email,
+            phone: shippingAddress.phone,
+            orderNote: shippingAddress.orderNote,
+            cardNumber: shippingAddress.cardNumber,
+            street: shippingAddress.street,
+            city: shippingAddress.city,
+            postalCode: shippingAddress.postalCode,
+            country: shippingAddress.country,
+            items: cartCtxt.items,
+            total: cartTotal,
+            createdAt: new Date(),
+          });
+
+          console.log("Document written with ID: ", orderRef.id);
+          cartCtxt.clearCart();
+          setAlert({
+            open: true,
+            message: `Order has been placed. Your order number is ${orderRef.id}`,
+            backgroundColor: "#4BB543",
+          });
+        } else {
+          setAlert({
+            open: true,
+            message: "You have insufficient balance for this purchase!",
+            backgroundColor: "#FF3232",
+          });
+        }
+      } else {
+        setAlert({
+          open: true,
+          message:
+            "Card number not valid. Please,enter a valid voucher number.",
+          backgroundColor: "#FF3232",
+        });
+      }
     } catch (e) {
       console.error("Error adding document: ", e);
+      setAlert({
+        open: true,
+        message: "An error occurred while processing your order.",
+        backgroundColor: "#FF3232",
+      });
     }
   };
 
@@ -223,31 +330,46 @@ export default function Header() {
               <SearchIcon />
             </SearchIconWrapper>
             <StyledInputBase
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
               placeholder="Search for products…"
               inputProps={{ "aria-label": "search" }}
             />
           </Search>
-          <StyledTab label="Home" component={Link} to="/" value={0} />
-          <StyledTab
-            label="Register your company"
-            component={Link}
-            to="/registercompany"
-            value={1}
-          />
-          <StyledTab
-            label="Become a rider"
-            component={Link}
-            to="/riderapply"
-            value={2}
-          />
-          {user ? (
-            <StyledTab label="Logout" component={Link} to="/logout" value={3} />
-          ) : (
-            <StyledTab label="Login" component={Link} to="/login" value={3} />
-          )}
+          <Tabs
+            value={value}
+            onChange={handleTabChange}
+            indicatorColor="transparent"
+            aria-label="Navigation Tabs">
+            <StyledTab label="Home" component={Link} to="/" value={0} />
+            <StyledTab
+              label="Register your company"
+              component={Link}
+              to="/registercompany"
+              value={1}
+            />
+            <StyledTab
+              label="Become a rider"
+              component={Link}
+              to="/riderapply"
+              value={2}
+            />
+            {user ? (
+              <StyledTab
+                label="Logout"
+                component={Link}
+                to="/logout"
+                value={3}
+              />
+            ) : (
+              <StyledTab label="Login" component={Link} to="/login" value={3} />
+            )}
+          </Tabs>
+
           {!user && (
             <StyledButton
-              onClick={() => setValue(6)}
+              onClick={() => setValue(4)}
               variant="contained"
               component={Link}
               to="/register">
@@ -263,7 +385,7 @@ export default function Header() {
           )}
           <StyledIconButton
             onClick={() => {
-              setValue(7);
+              setValue(5);
               setOpenDrawer(true);
             }}
             component={Link}
@@ -273,6 +395,15 @@ export default function Header() {
             color="inherit">
             <MenuIcon />
           </StyledIconButton>
+          <Snackbar
+            open={alert.open}
+            message={alert.message}
+            ContentProps={{ style: { backgroundColor: alert.backgroundColor } }}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            onClose={() => setAlert({ ...alert, open: false })}
+            autoHideDuration={4000}
+          />
+
           <Dialog
             open={dialogOpen}
             onClose={() => setDialogOpen(false)}
@@ -480,6 +611,18 @@ export default function Header() {
                   </Grid>
                 </Grid>
               </Grid>
+              <Typography variant="subtitle2">Card voucher number</Typography>
+              <TextField
+                autoFocus
+                margin="dense"
+                name="cardNumber"
+                label="Voucher Number"
+                type="text"
+                fullWidth
+                variant="outlined"
+                value={shippingAddress.cardNumber}
+                onChange={handleShippingAddressChange}
+              />
               <Typography variant="subtitle2">Order Note</Typography>
               <TextField
                 autoFocus
@@ -491,7 +634,7 @@ export default function Header() {
                 multiline
                 rows={4}
                 variant="outlined"
-                value={shipingAddress.orderNote}
+                value={shippingAddress.orderNote}
                 onChange={handleShippingAddressChange}
               />
               <Typography variant="subtitle2">Phone</Typography>
@@ -503,7 +646,7 @@ export default function Header() {
                 type="text"
                 fullWidth
                 variant="outlined"
-                value={shipingAddress.phone}
+                value={shippingAddress.phone}
                 onChange={handleShippingAddressChange}
               />
               <>
@@ -512,7 +655,7 @@ export default function Header() {
                   fullWidth
                   name="street"
                   variant="outlined"
-                  value={shipingAddress.street}
+                  value={shippingAddress.street}
                   onChange={handleShippingAddressChange}
                   margin="normal"
                   required
@@ -522,7 +665,7 @@ export default function Header() {
                   fullWidth
                   variant="outlined"
                   name="city"
-                  value={shipingAddress.city}
+                  value={shippingAddress.city}
                   onChange={handleShippingAddressChange}
                   margin="normal"
                   required
@@ -532,7 +675,7 @@ export default function Header() {
                   fullWidth
                   name="postalCode"
                   variant="outlined"
-                  value={shipingAddress.postalCode}
+                  value={shippingAddress.postalCode}
                   onChange={handleShippingAddressChange}
                   margin="normal"
                   required
@@ -542,7 +685,7 @@ export default function Header() {
                   fullWidth
                   name="country"
                   variant="outlined"
-                  value={shipingAddress.country}
+                  value={shippingAddress.country}
                   onChange={handleShippingAddressChange}
                   margin="normal"
                   required
@@ -575,6 +718,40 @@ export default function Header() {
           </Dialog>
         </Toolbar>
       </AppBar>
+      {searchText !== "" && (
+        <List
+          ref={searchResultsRef}
+          sx={{
+            width: "100%",
+            maxWidth: 360,
+            bgcolor: "background.paper",
+          }}>
+          {searchResults.length > 0 ? (
+            searchResults.slice(0, 12).map((product) => (
+              <ListItem
+                alignItems="flex-start"
+                key={product.id}
+                onClick={() => handleNavigation(product)}
+                sx={{ cursor: "pointer" }}>
+                <ListItemAvatar>
+                  <Avatar alt="Product Image" src={product.imageurl} />
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <Typography variant="body1" noWrap>
+                      {product.description}
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            ))
+          ) : (
+            <ListItem>
+              <ListItemText primary="No results found" />
+            </ListItem>
+          )}
+        </List>
+      )}
       <Box>
         <Drawer
           sx={{

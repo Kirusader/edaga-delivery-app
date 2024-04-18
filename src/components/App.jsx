@@ -23,6 +23,9 @@ import { auth } from "../firebaseConfig";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { CartContextProvider } from "../store/CartContext";
 import OrderDisplay from "./orders/OrderDisplay";
+import OrderAdmin from "./orders/OrderAdmin";
+import ProductDetail from "./ProductDetail";
+
 function App() {
   const [user, loading, error] = useAuthState(auth);
   return (
@@ -48,10 +51,11 @@ function App() {
                     path="/registercompany"
                     element={<RegisterCompany />}
                   />
-                  <Route path="/orders" element={<OrderDisplay/>}/>
+                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/admin" element={<OrderAdmin />} />
+                  <Route path="/orders" element={<OrderDisplay />} />
                   <Route path="/riderapply" element={<RegisterRider />} />
                   <Route path="/contact" element={<Contact />} />
-               
                 </>
               ) : (
                 <>

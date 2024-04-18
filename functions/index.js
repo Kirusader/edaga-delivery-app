@@ -1,7 +1,7 @@
 /** @format */
 const functions = require("firebase-functions");
 const nodemailer = require("nodemailer");
-const cors = require("cors")({origin: true});
+const cors = require("cors")({ origin: true });
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -10,11 +10,11 @@ const transporter = nodemailer.createTransport({
     pass: functions.config().email.pass,
   },
 });
-let mailOptions = {from: "kiroshadera2018@gmail.com"};
+let mailOptions = { from: "kiroshadera2018@gmail.com" };
 // Define a Cloud Function that handles HTTP requests and sends emails.
 exports.sendEmail = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-    const {name, email, phone, message} = req.query;
+    const { name, email, phone, message } = req.query;
     mailOptions = {
       ...mailOptions,
       to: "kiroshadera2016@gmail.com",
@@ -241,13 +241,13 @@ exports.sendEmail = functions.https.onRequest((req, res) => {
                         <tr>
                           <td align="center">
                             <a
-                              href="http://www.arcsoftwaredevelopment.com/"
+                              href="https://edaga-delivery.firebaseapp.com/"
                               target="_blank"
                             >
                               <img
                                 align="center"
-                                src="https://i.imgur.com/o1hebvN.jpg"
-                                alt="Arc Development"
+                                src=""
+                                alt=""
                                 width="600"
                                 height=""
                                 style="width:600px; max-width:600px; display:block;"
@@ -477,7 +477,7 @@ exports.sendEmail = functions.https.onRequest((req, res) => {
                                         class="font11"
                                       >
                                         <a
-                                          href="mailto:zachary@gmail.com"
+                                          href="mailto:kiros2024@gmail.com"
                                           style="color:#ffffff; text-decoration:none!important"
                                           >zachary@gmail.com</a
                                         >
