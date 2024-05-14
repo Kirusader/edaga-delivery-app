@@ -19,11 +19,8 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-
-// Svgs
-
-import { Google } from "../../assets/Google.jsx";
-import { Facebook } from "../../assets/Facebook.jsx";
+import Google from "../../assets/google.png";
+import Facebook from "../../assets/facebook.png";
 
 function Login() {
   const [err, setErrors] = useState([]);
@@ -60,9 +57,17 @@ function Login() {
   }, []);
   useEffect(() => {
     if (loading) return;
-
-    if (user) navigate("/");
-  }, [user, loading, err]);
+    if (user) {
+      const uid = user.uid;
+      if (uid === import.meta.env.VITE_ADMIN) {
+        navigate("/admin");
+      } else if (uid === import.meta.env.VITE_RIDER) {
+        navigate("/riderpage");
+      } else {
+        navigate("/");
+      }
+    }
+  }, [user, loading, navigate]);
 
   const handleLogin = async (method) => {
     switch (method) {
@@ -71,7 +76,8 @@ function Login() {
           setErrors([]);
           let errors = [];
           let testingString =
-            /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+            /^(([^<>()[\],;:\s@"']+(\.[^<>()[\],;:\s@"']+)*)|(".+"))@(([^<>()[\],;:\s@"']+\.)+[^<>()[\],;:\s@"']{2,})$/i;
+
           if (!email) {
             errors.push("Email required.");
           } else if (!testingString.test(email)) {
@@ -97,7 +103,6 @@ function Login() {
             case "Firebase: Error (auth/user-not-found).":
               setErrors("User is not found. ");
               break;
-
             case "Firebase: Error (auth/wrong-password).":
               setErrors("Password is incorrect. ");
               break;
@@ -109,7 +114,9 @@ function Login() {
             case "Firebase: Error (auth/invalid-email).":
               setErrors("Login fields are not valid. ");
               break;
-
+            case "Firebase: Error (auth/invalid-credential).":
+              setErrors("Email or Password is invalide.");
+              break;
             case "Firebase: Access to this account has been temporarily disabled due to many failed login attempts. You can immediately restore it by resetting your password or you can try again later. (auth/too-many-requests).":
               setErrors(
                 "Access to this account has been temporarily disabled due to many failed login attempts. You can immediately restore it by resetting your password or you can try again later. "
@@ -178,7 +185,10 @@ function Login() {
       />
       <Button
         variant="contained"
-        onClick={() => handleLogin("logInWithEmailAndPassword")}
+        onClick={() => {
+          handleLogin("logInWithEmailAndPassword");
+          navigate("/");
+        }}
         sx={{
           my: 1,
           "& .MuiInputBase-input": {
@@ -213,14 +223,22 @@ function Login() {
             handleLogin("signInWithGoogle");
             navigate("/");
           }}>
-          <Google />
+          <img
+            src={Google}
+            alt="Google"
+            style={{ width: "40px", height: "40px" }}
+          />
         </Button>
         <Button
           onClick={() => {
             handleLogin("signInWithFacebook");
             navigate("/");
           }}>
-          <Facebook />
+          <img
+            src={Facebook}
+            alt="Facebook"
+            style={{ width: "100px", height: "100px" }}
+          />
         </Button>
       </Box>
 
@@ -235,7 +253,7 @@ function Login() {
         </Typography>
       </Box>
       <Typography variant="h4" my={4}>
-        Don't have an account?
+        Don &apos; t have an account?{" "}
         <Typography
           variant="h4"
           component={Link}
@@ -279,8 +297,8 @@ function Login() {
           </Typography>
           <Typography gutterBottom>
             Welcome to Edaga delivery service, owned by Kiros enterprise
-            ("Owner"). This Privacy Policy explains how we collect, use, and
-            protect your personal data when you use our web app.
+            (&quot;Owner&quot;). This Privacy Policy explains how we collect,
+            use, and protect your personal data when you use our web app.
           </Typography>
 
           <Typography variant="subtitle2" fontWeight="bold">
@@ -326,8 +344,8 @@ function Login() {
           </Typography>
           <Typography gutterBottom>
             If you would like to make any changes or if you have any questions
-            or concerns regarding your data, please don't hesitate to contact us
-            on edagadelivery2024@gmail.com.
+            or concerns regarding your data, please don&apos;t hesitate to
+            contact us on edagadelivery2024@gmail.com.
           </Typography>
 
           <Typography variant="subtitle2" fontWeight="bold">

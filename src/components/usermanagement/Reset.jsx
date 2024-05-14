@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -9,18 +9,19 @@ import { auth, sendPasswordReset } from "../../firebaseConfig";
 function Reset() {
   const [err, setErrors] = useState(false);
   const [email, setEmail] = useState("");
-  const [user, loading, error] = useAuthState(auth);
+  const [user, loading] = useAuthState(auth);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (loading) return;
     if (user) navigate("/");
-  }, [user, loading]);
+  }, [user, loading, navigate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = () => {
     setErrors(false);
     let testingString =
-      /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+      /^(([^<>()[\],;:\s@"']+(\.[^<>()[\],;:\s@"']+)*)|(".+"))@(([^<>()[\],;:\s@"']+\.)+[^<>()[\],;:\s@"']{2,})$/i;
+
     if (!email) {
       setErrors("Email required.");
     } else if (!testingString.test(email)) {
@@ -66,7 +67,7 @@ function Reset() {
       )}
 
       <Typography variant="h4">
-        Don't have an account?{" "}
+        Don &apos; t have an account?{" "}
         <Typography
           variant="h4"
           component={Link}

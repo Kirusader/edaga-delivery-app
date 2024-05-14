@@ -45,7 +45,7 @@ const signInWithFacebook = async (lat, lng) => {
   );
   try {
     const credential = FacebookAuthProvider.credentialFromResult(res);
-    const accessToken = credential.accessToken;
+
     if (q.docs.length < 1) {
       // Add user to Firestore if not already exists
       const newUserRef = await addDoc(collection(db, "users"), {
@@ -53,7 +53,8 @@ const signInWithFacebook = async (lat, lng) => {
         name: user.displayName,
         email: user.email,
         location: [lat, lng],
-        rider: false,
+        type: "customer",
+        isActive: false,
         date: new Date(),
       });
       console.log(
@@ -84,7 +85,8 @@ const signInWithGoogle = async (lat, lng) => {
         name: user.displayName,
         email: user.email,
         location: [lat, lng],
-        rider: false,
+        type: "customer",
+        isActive: false,
         date: new Date(),
       });
       console.log(
@@ -124,7 +126,8 @@ const registerWithEmailAndPassword = async (
         name: name,
         email: email,
         location: [lat, lng],
-        rider: false,
+        type: "customer",
+        isActive: false,
         date: new Date(),
       });
       return "Success";

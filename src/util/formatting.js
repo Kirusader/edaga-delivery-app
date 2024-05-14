@@ -1,6 +1,6 @@
 /** @format */
 
-export const currencyFormatter = new Intl.NumberFormat("en-GB", {
+export const currencyFormatter = new Intl.NumberFormat("en-ER", {
   style: "currency",
-  currency: "GBP",
+  currency: "ERN",
 });

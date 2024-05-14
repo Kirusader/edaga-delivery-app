@@ -18,6 +18,18 @@ import RatingIcon from "@mui/icons-material/StarRate";
 import { db } from "../firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import CartContext from "../store/CartContext";
+import { styled } from "@mui/material/styles";
+const StyledButton = styled(Button)(({ theme }) => ({
+  ...theme.typography.orderNow,
+  fontSize: "0.9rem",
+  height: 60,
+  marginLeft: 30,
+  width: 300,
+  [theme.breakpoints.down("sm")]: {
+    marginBottom: "2em",
+    marginTop: "1em",
+  },
+}));
 
 function ProductDetail() {
   const { id } = useParams();
@@ -79,7 +91,7 @@ function ProductDetail() {
     return cartCtx.items.some((item) => item.id === itemId);
   };
   return (
-    <Container sx={{ py: 2 }}>
+    <Container sx={{ py: 2, my: 6 }}>
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
           <Card>
@@ -115,15 +127,14 @@ function ProductDetail() {
                   {product ? `(${product.star})` : ""}
                 </Typography>
               </Box>
-              <Typography variant="h6">Price: ${product?.price}</Typography>
+              <Typography variant="h6">Price: {product?.price}Nkf</Typography>
             </CardContent>
             <CardActions>
-              <Button
-                size="small"
-                color="primary"
+              <StyledButton
+                variant="outlined"
                 onClick={() => handleAddToCart()}>
                 Add Item or Remove from Cart
-              </Button>
+              </StyledButton>
             </CardActions>
           </Card>
         </Grid>

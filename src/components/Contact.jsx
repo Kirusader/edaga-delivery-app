@@ -3,8 +3,10 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import ButtonArrow from "./ui/ButtonArrow";
-import background from "../assets/background.jpg";
-import mobileBackground from "../assets/mobileBackground.jpg";
+const background =
+  "https://res.cloudinary.com/drnarknab/image/upload/v1714834836/background_x1nfsd.jpg";
+const mobileBackground =
+  "https://res.cloudinary.com/drnarknab/image/upload/v1714834838/mobileBackground_e82ins.jpg";
 import { useTheme, styled } from "@mui/material/styles";
 import {
   Dialog,
@@ -161,7 +163,7 @@ export default function Contact() {
                 align={matchesMD ? "center" : undefined}
                 variant="subtitle2"
                 sx={{ color: theme.palette.common.blue }}>
-                We're waiting
+                We&apos;re waiting
               </Typography>
             </Grid>
             <Grid item container sx={{ marginTop: "2em" }}>

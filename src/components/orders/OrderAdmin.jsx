@@ -125,11 +125,12 @@ const OrderAdmin = () => {
         <Table sx={{ maxWidth: "100%" }} aria-label="order details table">
           <TableHead>
             <TableRow>
+              <TableCell>Order Number</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Phone</TableCell>
               <TableCell>Address</TableCell>
-              <TableCell>Total Price (£)</TableCell>
+              <TableCell>Total Price (Nakfa)</TableCell>
               <TableCell>Order Note</TableCell>
               <TableCell>Items Ordered</TableCell>
               <TableCell>Order Status</TableCell>
@@ -138,6 +139,7 @@ const OrderAdmin = () => {
           <TableBody>
             {orders.map((order) => (
               <TableRow key={order.id}>
+                <TableCell>{order.orderId}</TableCell>
                 <TableCell component="th" scope="row">
                   {order.name}
                 </TableCell>

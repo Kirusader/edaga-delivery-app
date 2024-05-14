@@ -1,13 +1,9 @@
 /** @format */
 
 import { createTheme } from "@mui/material/styles";
-
-// Define the main colors for your theme
 const arcBlue = "#0B72B9";
 const arcOrange = "#FFBA60";
 const arcGrey = "#868686";
-
-// Create a theme instance
 const theme = createTheme({
   palette: {
     common: {
@@ -109,7 +105,6 @@ const theme = createTheme({
     },
   },
   components: {
-    // Example of component style overrides
     MuiInputLabel: {
       styleOverrides: {
         root: {

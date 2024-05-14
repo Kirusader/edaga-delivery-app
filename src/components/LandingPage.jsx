@@ -4,25 +4,25 @@ import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { Grid, Box, Typography, Paper, Button } from "@mui/material";
+import { Grid, Typography, Paper, Button } from "@mui/material";
 import { useTheme, styled } from "@mui/material/styles";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import ButtonArrow from "./ui/ButtonArrow";
 import forwardArrow from "../assets/forwardArrow.svg";
 import backArrow from "../assets/backArrow.svg";
-import EritreanFoodImg from "../assets/eritreanFood.png";
-import PersonalCareImg from "../assets/Personal Care.png";
-import HomeCareImg from "../assets/Home Care.png";
-import ElectronicsApplianceImg from "../assets/Electronics and Home Appliance.png";
-import StationaryImg from "../assets/Stationary.png";
-import BeverageImg from "../assets/Beverage.png";
-import BedBathImg from "../assets/Bed and Bath.png";
-import CardImg from "../assets/card.png";
-import CheckenImg from "../assets/checken.png";
-import TrackOrderImg from "../assets/trackdelivery.png";
-import RegisterCompanyImg from "../assets/registercompany.png";
-import RiderImg from "../assets/rider.png";
+const EritreanFoodImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833070/eritreanFood_vsshh7.png";
+const PersonalCareImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833070/Personal_Care_y8xuiq.png";
+const HomeCareImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833071/Home_Care_txajta.png";
+const ElectronicsApplianceImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833070/Electronics_and_Home_Appliance_xyku5p.png";
+const StationaryImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833070/Stationary_t8q2b3.png";
+const BeverageImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833070/Beverage_oafp0i.png";
+const BedBathImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833070/Bed_and_Bath_o5wrjj.png";
+const CardImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833645/card_numdu5.png";
+const CheckenImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833071/checken_hupddd.png";
+const TrackOrderImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833071/trackdelivery_c0psuz.png";
+const RegisterCompanyImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833646/registercompany_qwkxq3.png";
+const RiderImg = "https://res.cloudinary.com/drnarknab/image/upload/v1714833646/rider_pghvz9.png";
 const StyledOrderNowButton = styled(Button)(({ theme }) => ({
   ...theme.typography.orderNow,
   fontSize: "0.9rem",
@@ -253,8 +253,8 @@ function LandingPage() {
                     fontWeight: 400,
                     fontSize: "1.2rem",
                   }}>
-                  More choice is important to us. That's why ordering what you
-                  feel like is just as important as paying the way you feel
+                  More choice is important to us. That&apos;s why ordering what
+                  you feel like is just as important as paying the way you feel
                   like, simple,reliable and safe we make it possible.
                 </Typography>
               </Grid>
@@ -284,7 +284,7 @@ function LandingPage() {
           <Grid item>
             <Grid item container direction={"column"} alignItems={"center"}>
               <Grid item>
-                <Typography variant="h2">Today's Special Deal</Typography>
+                <Typography variant="h2">Today&apos;s Special Deal</Typography>
               </Grid>
               <Grid item>
                 <Typography

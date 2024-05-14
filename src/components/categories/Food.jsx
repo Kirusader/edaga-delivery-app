@@ -11,11 +11,13 @@ import {
   Grid,
   Typography,
   Pagination,
-  IconButton,Snackbar
+  IconButton,
+  Snackbar,
 } from "@mui/material";
 import { AddShoppingCart as AddShoppingCartIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import CartContext from "../../store/CartContext";
+import { useNavigate } from "react-router-dom";
 export default function Food() {
   const theme = useTheme();
   const [foods, setFoods] = useState([]);
@@ -26,6 +28,7 @@ export default function Food() {
     message: "",
     backgroundColor: "",
   });
+  const navigate = useNavigate();
   const itemsPerPage = 9;
   const foodCollectionRef = collection(db, "food");
   const cartCtxt = useContext(CartContext);
@@ -91,14 +94,17 @@ export default function Food() {
                   borderRadius: 0,
                 },
               }}
-              onClick={() => handleCardSelect(food.id)}>
+              onClick={() => {
+                handleCardSelect(food.id);
+                navigate(`/product/${food.id}`);
+              }}>
               <Grid item sx={{ my: 1 }}>
                 <Grid item container direction={"column"}>
                   <Grid item>
                     <CardMedia
                       component="img"
-                      height="300"
-                      width="300"
+                      height="240"
+                      width="240"
                       image={food.imageurl}
                       alt={food.description}
                     />

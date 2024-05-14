@@ -14,12 +14,26 @@ module.exports = {
   settings: { react: { version: "18.2" } },
   plugins: ["react-refresh"],
   rules: {
-    "react/jsx-no-target-blank": "off",
-
-    "max-len": ["error", { code: 100 }],
-    "react-refresh/only-export-components": [
-      "warn",
-      { allowConstantExport: true },
-    ],
+    "no-restricted-globals": ["error", "name"],
+    "prefer-arrow-callback": "error",
+    quotes: ["error", "double", { allowTemplateLiterals: true }],
+    "max-len": ["error", 800],
+    "no-tabs": "off",
+    "no-unused-vars": "off",
+    "react/prop-types": "off",
+  },
+  overrides: [
+    {
+      files: ["**/*.spec.*"],
+      env: {
+        mocha: true,
+      },
+      rules: {
+        "max-len": ["error", { code: 300 }],
+      },
+    },
+  ],
+  globals: {
+    google: "readonly",
   },
 };

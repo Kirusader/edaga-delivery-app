@@ -1,8 +1,8 @@
 /** @format */
 
 import React, { useEffect, useState } from "react";
-import { Google } from "../../assets/Google.jsx";
-import { Facebook } from "../../assets/Facebook.jsx";
+import Google from "../../assets/google.png";
+import Facebook from "../../assets/facebook.png";
 import { NavLink, Link } from "react-router-dom";
 import { Box, TextField, Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -59,7 +59,7 @@ function Register() {
     setErrors([]);
     let errors = [];
     let testingString =
-      /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+      /^(([^<>()[\],;:\s@"']+(\.[^<>()[\],;:\s@"']+)*)|(".+"))@(([^<>()[\],;:\s@"']+\.)+[^<>()[\],;:\s@"']{2,})$/i;
 
     if (!values.name) {
       errors.push("Name required.");
@@ -98,7 +98,7 @@ function Register() {
   useEffect(() => {
     if (loading) return;
     if (user) navigate("/");
-  }, [user, loading, error, errors]);
+  }, [user, loading, error, errors, navigate]);
 
   return (
     <Box
@@ -176,10 +176,18 @@ function Register() {
           justifyContent: "center",
         }}>
         <Button onClick={signInWithGoogle} sx={{ mx: 1 }}>
-          <Google />
+          <img
+            src={Google}
+            alt="Google"
+            style={{ width: "40px", height: "40px" }}
+          />
         </Button>
         <Button onClick={signInWithFacebook} sx={{ mx: 1 }}>
-          <Facebook />
+          <img
+            src={Facebook}
+            alt="Facebook"
+            style={{ width: "100px", height: "100px" }}
+          />
         </Button>
       </Box>
 

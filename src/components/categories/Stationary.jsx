@@ -17,6 +17,7 @@ import {
 import { AddShoppingCart as AddShoppingCartIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import CartContext from "../../store/CartContext";
+import { useNavigate } from "react-router-dom";
 export default function Stationary() {
   const theme = useTheme();
   const [stationaries, setStationaries] = useState([]);
@@ -27,6 +28,7 @@ export default function Stationary() {
     message: "",
     backgroundColor: "",
   });
+  const navigate = useNavigate();
   const itemsPerPage = 9;
   const stationaryCollectionRef = collection(db, "stationary");
   const CartCtxt = useContext(CartContext);
@@ -98,14 +100,17 @@ export default function Stationary() {
                   borderRadius: 0,
                 },
               }}
-              onClick={() => handleCardSelect(stationary.id)}>
+              onClick={() => {
+                handleCardSelect(stationary.id);
+                navigate(`/product/${stationary.id}`);
+              }}>
               <Grid item sx={{ my: 1 }}>
                 <Grid item container direction={"column"}>
                   <Grid item>
                     <CardMedia
                       component="img"
-                      height="300"
-                      width="300"
+                      height="240"
+                      width="240"
                       image={stationary.imageurl}
                       alt={stationary.description}
                     />

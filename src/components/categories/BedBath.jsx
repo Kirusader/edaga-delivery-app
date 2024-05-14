@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useContext } from "react";
 import ReactStars from "react-rating-stars-component";
+import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import {
@@ -27,6 +28,7 @@ export default function BedBath() {
     message: "",
     backgroundColor: "",
   });
+  const navigate = useNavigate();
   const itemsPerPage = 9;
   const bedBathCollectionRef = collection(db, "bedbath");
   const cartCtxt = useContext(CartContext);
@@ -92,14 +94,17 @@ export default function BedBath() {
                   borderRadius: 0,
                 },
               }}
-              onClick={() => handleCardSelect(bedBath.id)}>
+              onClick={() => {
+                handleCardSelect(bedBath.id);
+                navigate(`/product/${bedBath.id}`);
+              }}>
               <Grid item sx={{ my: 1 }}>
                 <Grid item container direction={"column"}>
                   <Grid item>
                     <CardMedia
                       component="img"
-                      height="300"
-                      width="300"
+                      height="250"
+                      width="250"
                       image={bedBath.imageurl}
                       alt={bedBath.description}
                     />

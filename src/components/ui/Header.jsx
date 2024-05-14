@@ -3,8 +3,6 @@ import React, { useState, useContext, useEffect, useRef } from "react";
 import {
   AppBar,
   Toolbar,
-  Tab,
-  Tabs,
   Typography,
   Box,
   ListItem,
@@ -27,6 +25,7 @@ import {
   Avatar,
   ListItemAvatar,
 } from "@mui/material";
+import axios from "axios";
 import {
   Search as SearchIcon,
   Menu as MenuIcon,
@@ -36,10 +35,11 @@ import {
   AddCircleOutline,
 } from "@mui/icons-material";
 import { useTheme, alpha, styled } from "@mui/material/styles";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, NavLink } from "react-router-dom";
 import { auth, db } from "../../firebaseConfig";
 import { useAuthState } from "react-firebase-hooks/auth";
 import CartContext from "../../store/CartContext";
+import defaultImage from "../../assets/default.png";
 import {
   doc,
   query,
@@ -51,14 +51,23 @@ import {
 } from "firebase/firestore";
 import { currencyFormatter } from "../../util/formatting";
 import closeButton from "../../assets/closebutton.svg";
-const StyledTab = styled(Tab)(({ theme }) => ({
-  ...theme.typography.tab,
-  margin: "0.5rem",
-  padding: "2px",
-  opacity: 0.7,
-  "&:hover": {
-    opacity: 1,
+const logoImage =
+  "https://res.cloudinary.com/drnarknab/image/upload/v1714834837/logo_h8nky1.png";
+const ActiveStyle = {
+  fontWeight: "bold",
+  color: "primary",
+};
+const StyledNavLink = styled(NavLink)(({ theme }) => ({
+  ...theme.typography.subtitle2,
+  textDecoration: "none",
+  margin: theme.spacing(1),
+  "&.active": {
+    fontWeight: "bold",
+    color: theme.palette.common.blue,
   },
+}));
+const StyledNavButton = styled(Button)(({ theme }) => ({
+  ...theme.typography.subtitle2,
 }));
 const StyledBadge = styled(Badge)(({ theme }) => ({
   "& .MuiBadge-badge": {
@@ -143,7 +152,6 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 }));
 
 export default function Header() {
-  const [value, setValue] = useState(0);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
@@ -167,9 +175,7 @@ export default function Header() {
   const navigate = useNavigate();
   const searchResultsRef = useRef(null);
   const cartCtxt = useContext(CartContext);
-  const handleTabChange = (event, newValue) => {
-    setValue(newValue);
-  };
+
   const totalCartItems = cartCtxt.items.reduce((totalNumberOfItems, item) => {
     return totalNumberOfItems + item.quantity;
   }, 0);
@@ -185,7 +191,7 @@ export default function Header() {
       );
       const doc = await getDocs(q);
 
-      const data = await doc.docs[0].data();
+      const data = doc.docs[0].data();
       return data;
     } catch (err) {
       console.error(err);
@@ -199,7 +205,6 @@ export default function Header() {
       [name]: value,
     }));
   };
-
   useEffect(() => {
     const collectionNames = [
       "bedbath",
@@ -228,21 +233,49 @@ export default function Header() {
     product.description.toLowerCase().includes(searchText.toLowerCase())
   );
   const handleNavigation = (product) => {
-    if (window.location.href.includes("/payment")) {
-      swal({
-        title: "Are you sure?",
-        text: "Your transaction is not completed!",
-        icon: "warning",
-        buttons: ["Cancel", "Yes"],
-      }).then((willNavigate) => {
-        if (willNavigate) {
-          navigate(`/product/${product.id}`);
-        }
-      });
-    } else {
-      navigate(`/product/${product.id}`);
-      setSearchText("");
-    }
+    navigate(`/product/${product.id}`);
+    setSearchText("");
+  };
+  const generateRandomNumber = () => {
+    // Generates a 5-digit random number as string
+    return Array.from({ length: 5 }, () => Math.floor(Math.random() * 10)).join(
+      ""
+    );
+  };
+
+  // Define possible choices for the additional character in the order number
+  const possibleChoices = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "K",
+    "L",
+    "M",
+    "N",
+    "T",
+    "Y",
+    "Z",
+  ];
+
+  // Select a random character from possibleChoices
+  const randomCharacter =
+    possibleChoices[Math.floor(Math.random() * possibleChoices.length)];
+
+  // Generate a random order number by combining the random number with the random character
+  const randomOrderNumber = `${randomCharacter}${generateRandomNumber()}`;
+  const initialShippingAddress = {
+    cardNumber: "",
+    phone: "",
+    orderNote: "",
+    street: "",
+    city: "",
+    postalCode: "",
+    country: "",
   };
   const handleSubmitOrder = async () => {
     try {
@@ -263,7 +296,7 @@ export default function Header() {
             balance: newBalance,
             active: newBalance > 0,
           });
-          const orderRef = await addDoc(collection(db, "orders"), {
+          await addDoc(collection(db, "orders"), {
             uid: user?.uid,
             name: userData.name,
             email: userData.email,
@@ -276,14 +309,17 @@ export default function Header() {
             country: shippingAddress.country,
             items: cartCtxt.items,
             total: cartTotal,
+            status: "pending",
+            driverId: null,
+            orderId: randomOrderNumber,
             createdAt: new Date(),
           });
-
-          console.log("Document written with ID: ", orderRef.id);
+          setShippingAddress(initialShippingAddress);
+          console.log("Document written with ID: ", randomOrderNumber);
           cartCtxt.clearCart();
           setAlert({
             open: true,
-            message: `Order has been placed. Your order number is ${orderRef.id}`,
+            message: `Order has been placed. Your order number is ${randomOrderNumber}`,
             backgroundColor: "#4BB543",
           });
         } else {
@@ -310,99 +346,166 @@ export default function Header() {
       });
     }
   };
-
+  const onConfirm = async () => {
+    const userData = await fetchUserData();
+    if (userData) {
+      axios
+        .get(
+          "https://us-central1-edaga-delivery.cloudfunctions.net/sendOrder",
+          {
+            params: {
+              name: userData.name,
+              email: userData.email,
+              phone: shippingAddress.phone,
+              cartData: JSON.stringify(cartCtxt.items),
+              orderId: randomOrderNumber,
+            },
+          }
+        )
+        .then((res) => {
+          setShippingAddress(initialShippingAddress);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  };
   return (
     <Box sx={{ width: "100%" }}>
       <AppBar position="static" elevation={0} sx={{ width: "95%", mx: "auto" }}>
         <Toolbar disableGutters>
-          <Button
-            onClick={() => setValue(0)}
-            component={Link}
-            to="/"
-            sx={{ marginRight: 3, marginLeft: 0 }}
-            disableRipple>
-            <Typography variant="h2" sx={{ color: "#FFBA60" }}>
-              ዕዳጋ
-            </Typography>
-          </Button>
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              type="text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search for products…"
-              inputProps={{ "aria-label": "search" }}
-            />
-          </Search>
-          <Tabs
-            value={value}
-            onChange={handleTabChange}
-            indicatorColor="transparent"
-            aria-label="Navigation Tabs">
-            <StyledTab label="Home" component={Link} to="/" value={0} />
-            <StyledTab
-              label="Register your company"
-              component={Link}
-              to="/registercompany"
-              value={1}
-            />
-            <StyledTab
-              label="Become a rider"
-              component={Link}
-              to="/riderapply"
-              value={2}
-            />
-            {user ? (
-              <StyledTab
-                label="Logout"
-                component={Link}
-                to="/logout"
-                value={3}
+          <StyledNavLink to="/">
+            <StyledNavButton
+              sx={{ marginRight: 3, marginLeft: 0 }}
+              disableRipple>
+              <img
+                src={logoImage}
+                alt="logo"
+                width={"150px"}
+                height={"150px"}
               />
+            </StyledNavButton>
+          </StyledNavLink>
+          {user ? (
+            user.uid === import.meta.env.VITE_RIDER ? (
+              <>
+                <StyledNavLink to="/riderpage">View Orders</StyledNavLink>
+                <StyledNavLink
+                  to="/logout"
+                  style={({ isActive }) =>
+                    isActive ? ActiveStyle : undefined
+                  }>
+                  <StyledNavButton
+                    onClick={() => {
+                      cartCtxt.clearCart();
+                    }}
+                    variant="text">
+                    Logout
+                  </StyledNavButton>
+                </StyledNavLink>
+              </>
+            ) : user.uid === import.meta.env.VITE_ADMIN ? (
+              <>
+                <StyledNavLink to="/admin">Manage Orders</StyledNavLink>
+                <StyledNavLink
+                  to="/logout"
+                  style={({ isActive }) =>
+                    isActive ? ActiveStyle : undefined
+                  }>
+                  <StyledNavButton
+                    onClick={() => {
+                      cartCtxt.clearCart();
+                    }}
+                    variant="text">
+                    Logout
+                  </StyledNavButton>
+                </StyledNavLink>
+              </>
             ) : (
-              <StyledTab label="Login" component={Link} to="/login" value={3} />
-            )}
-          </Tabs>
-
-          {!user && (
-            <StyledButton
-              onClick={() => setValue(4)}
-              variant="contained"
-              component={Link}
-              to="/register">
-              SignUp
-            </StyledButton>
+              <>
+                <Search>
+                  <SearchIconWrapper>
+                    <SearchIcon />
+                  </SearchIconWrapper>
+                  <StyledInputBase
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Search for products…"
+                    inputProps={{ "aria-label": "search" }}
+                  />
+                </Search>
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-around",
+                  }}>
+                  <StyledNavLink to="/">Home</StyledNavLink>
+                  <StyledNavLink to="/riderapply">Become a rider</StyledNavLink>
+                  <StyledNavLink to="/registercompany">
+                    Register your company
+                  </StyledNavLink>
+                  <StyledNavLink
+                    to="/logout"
+                    style={({ isActive }) =>
+                      isActive ? ActiveStyle : undefined
+                    }>
+                    <StyledNavButton
+                      onClick={() => {
+                        cartCtxt.clearCart();
+                      }}
+                      variant="text">
+                      Logout
+                    </StyledNavButton>
+                  </StyledNavLink>
+                </Box>
+                <StyledBadge
+                  badgeContent={totalCartItems}
+                  color="primary"
+                  showZero>
+                  <IconButton onClick={() => setDialogOpen(true)}>
+                    <ShoppingCartIcon color="error" />
+                  </IconButton>
+                </StyledBadge>
+                <StyledIconButton
+                  onClick={() => {
+                    setOpenDrawer(true);
+                  }}
+                  component={Link}
+                  to="/account"
+                  size="large"
+                  edge="end"
+                  color="inherit">
+                  <MenuIcon />
+                </StyledIconButton>
+                <Snackbar
+                  open={alert.open}
+                  message={alert.message}
+                  ContentProps={{
+                    style: { backgroundColor: alert.backgroundColor },
+                  }}
+                  anchorOrigin={{ vertical: "top", horizontal: "center" }}
+                  onClose={() => setAlert({ ...alert, open: false })}
+                  autoHideDuration={4000}
+                />
+              </>
+            )
+          ) : (
+            <>
+              <StyledNavLink
+                to="/login"
+                style={({ isActive }) => (isActive ? ActiveStyle : undefined)}>
+                Login
+              </StyledNavLink>
+              <StyledNavLink
+                to="/register"
+                style={({ isActive }) => (isActive ? ActiveStyle : undefined)}>
+                SignUp
+              </StyledNavLink>
+            </>
           )}
-          {user && (
-            <StyledBadge badgeContent={totalCartItems} color="primary" showZero>
-              <IconButton onClick={() => setDialogOpen(true)}>
-                <ShoppingCartIcon color="error" />
-              </IconButton>
-            </StyledBadge>
-          )}
-          <StyledIconButton
-            onClick={() => {
-              setValue(5);
-              setOpenDrawer(true);
-            }}
-            component={Link}
-            to="/account"
-            size="large"
-            edge="end"
-            color="inherit">
-            <MenuIcon />
-          </StyledIconButton>
-          <Snackbar
-            open={alert.open}
-            message={alert.message}
-            ContentProps={{ style: { backgroundColor: alert.backgroundColor } }}
-            anchorOrigin={{ vertical: "top", horizontal: "center" }}
-            onClose={() => setAlert({ ...alert, open: false })}
-            autoHideDuration={4000}
-          />
 
           <Dialog
             open={dialogOpen}
@@ -539,7 +642,6 @@ export default function Header() {
             open={checkoutDialogOpen}
             onClose={() => {
               setCheckoutDialogOpen(false);
-              setManualEntry(false);
             }}>
             <DialogTitle>Welcome to Checkout</DialogTitle>
             <DialogContent>
@@ -622,6 +724,7 @@ export default function Header() {
                 variant="outlined"
                 value={shippingAddress.cardNumber}
                 onChange={handleShippingAddressChange}
+                required
               />
               <Typography variant="subtitle2">Order Note</Typography>
               <TextField
@@ -636,6 +739,7 @@ export default function Header() {
                 variant="outlined"
                 value={shippingAddress.orderNote}
                 onChange={handleShippingAddressChange}
+                required
               />
               <Typography variant="subtitle2">Phone</Typography>
               <TextField
@@ -648,6 +752,7 @@ export default function Header() {
                 variant="outlined"
                 value={shippingAddress.phone}
                 onChange={handleShippingAddressChange}
+                required
               />
               <>
                 <TextField
@@ -708,6 +813,7 @@ export default function Header() {
                   onClick={() => {
                     handleSubmitOrder();
                     setCheckoutDialogOpen(false);
+                    onConfirm();
                   }}
                   color="primary"
                   variant="contained">
@@ -722,6 +828,7 @@ export default function Header() {
         <List
           ref={searchResultsRef}
           sx={{
+            marginLeft: 27,
             width: "100%",
             maxWidth: 360,
             bgcolor: "background.paper",
@@ -776,12 +883,54 @@ export default function Header() {
                 to="/"
                 onClick={() => {
                   setOpenDrawer(false);
-                  setValue(0);
                 }}>
                 <img src={closeButton} alt="close" />
               </IconButton>
             </DrawerHeader>
-
+            <Grid container justifyContent="center" sx={{ width: "100%" }}>
+              <Grid item xs={12} md={6} sx={{ textAlign: "center", mt: 2 }}>
+                <Avatar
+                  src={defaultImage}
+                  sx={{ width: 100, height: 100, mx: "auto" }}
+                />
+                <Typography variant="h5" sx={{ mt: 1 }}>
+                  {user ? user.displayName : ""}
+                </Typography>
+                <Typography variant="subtitle2">
+                  {user ? user.email : ""}
+                </Typography>
+                <Box sx={{ display: "flex", justifyContent: "space-around" }}>
+                  {user ? (
+                    <>
+                      <StyledButton
+                        onClick={() => {
+                          cartCtxt.clearCart();
+                        }}
+                        variant="contained"
+                        component={Link}
+                        to="/logout">
+                        SignOut
+                      </StyledButton>
+                    </>
+                  ) : (
+                    <>
+                      <StyledButton
+                        variant="contained"
+                        component={Link}
+                        to="/login">
+                        LogIn
+                      </StyledButton>
+                      <StyledButton
+                        variant="contained"
+                        component={Link}
+                        to="/register">
+                        SignUp
+                      </StyledButton>
+                    </>
+                  )}
+                </Box>
+              </Grid>
+            </Grid>
             <List
               sx={{
                 width: "100%",
@@ -851,36 +1000,6 @@ export default function Header() {
                 </ListItem>
               ))}
             </List>
-            <Box sx={{ display: "flex", justifyContent: "space-around" }}>
-              {user ? (
-                <>
-                  <StyledButton
-                    onClick={() => setValue(3)}
-                    variant="contained"
-                    component={Link}
-                    to="/logout">
-                    LogOut
-                  </StyledButton>
-                </>
-              ) : (
-                <>
-                  <StyledButton
-                    onClick={() => setValue(3)}
-                    variant="contained"
-                    component={Link}
-                    to="/login">
-                    LogIn
-                  </StyledButton>
-                  <StyledButton
-                    onClick={() => setValue(4)}
-                    variant="contained"
-                    component={Link}
-                    to="/register">
-                    SignUp
-                  </StyledButton>
-                </>
-              )}
-            </Box>
           </Box>
         </Drawer>
       </Box>

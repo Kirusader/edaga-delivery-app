@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import ReactStars from "react-rating-stars-component";
 import { collection, onSnapshot } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import { db } from "../../firebaseConfig";
 import {
   Card,
@@ -27,6 +28,7 @@ export default function Beverage() {
     message: "",
     backgroundColor: "",
   });
+  const navigate = useNavigate();
   const itemsPerPage = 9;
   const beverageCollectionRef = collection(db, "beverage");
   const cartCtxt = useContext(CartContext);
@@ -93,14 +95,17 @@ export default function Beverage() {
                   borderRadius: 0,
                 },
               }}
-              onClick={() => handleCardSelect(beverage.id)}>
+              onClick={() => {
+                handleCardSelect(beverage.id);
+                navigate(`/product/${beverage.id}`);
+              }}>
               <Grid item sx={{ my: 1 }}>
                 <Grid item container direction={"column"}>
                   <Grid item>
                     <CardMedia
                       component="img"
-                      height="300"
-                      width="300"
+                      height="250"
+                      width="250"
                       image={beverage.imageurl}
                       alt={beverage.description}
                     />

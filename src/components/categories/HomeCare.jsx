@@ -17,6 +17,7 @@ import {
 import { AddShoppingCart as AddShoppingCartIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import CartContext from "../../store/CartContext";
+import { useNavigate } from "react-router-dom";
 export default function HomeCare() {
   const theme = useTheme();
   const [homeCares, setHomeCares] = useState([]);
@@ -27,6 +28,7 @@ export default function HomeCare() {
     message: "",
     backgroundColor: "",
   });
+  const navigate = useNavigate();
   const itemsPerPage = 9;
   const homeCollectionRef = collection(db, "homecare");
   const cartCtxt = useContext(CartContext);
@@ -93,14 +95,17 @@ export default function HomeCare() {
                   borderRadius: 0,
                 },
               }}
-              onClick={() => handleCardSelect(homecare.id)}>
+              onClick={() => {
+                handleCardSelect(homecare.id);
+                navigate(`/product/${homecare.id}`);
+              }}>
               <Grid item sx={{ my: 1 }}>
                 <Grid item container direction={"column"}>
                   <Grid item>
                     <CardMedia
                       component="img"
-                      height="300"
-                      width="300"
+                      height="240"
+                      width="240"
                       image={homecare.imageurl}
                       alt={homecare.description}
                     />

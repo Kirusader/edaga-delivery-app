@@ -17,6 +17,7 @@ import {
 import { AddShoppingCart as AddShoppingCartIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import CartContext from "../../store/CartContext";
+import { useNavigate } from "react-router-dom";
 export default function PersonalCare() {
   const theme = useTheme();
   const [personalCares, setPersonalCares] = useState([]);
@@ -27,6 +28,7 @@ export default function PersonalCare() {
     message: "",
     backgroundColor: "",
   });
+  const navigate = useNavigate();
   const itemsPerPage = 9;
   const personalCollectionRef = collection(db, "personalcare");
   const cartCtxt = useContext(CartContext);
@@ -98,14 +100,17 @@ export default function PersonalCare() {
                   borderRadius: 0,
                 },
               }}
-              onClick={() => handleCardSelect(personalCare.id)}>
+              onClick={() => {
+                handleCardSelect(personalCare.id);
+                navigate(`/product/${personalCare.id}`);
+              }}>
               <Grid item sx={{ my: 1 }}>
                 <Grid item container direction={"column"}>
                   <Grid item>
                     <CardMedia
                       component="img"
-                      height="300"
-                      width="300"
+                      height="240"
+                      width="240"
                       image={personalCare.imageurl}
                       alt={personalCare.description}
                     />

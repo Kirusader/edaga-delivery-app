@@ -17,6 +17,7 @@ import {
 import { AddShoppingCart as AddShoppingCartIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import CartContext from "../../store/CartContext";
+import { useNavigate } from "react-router-dom";
 export default function ElectricalAppliance() {
   const theme = useTheme();
   const [electricals, setElectricals] = useState([]);
@@ -27,6 +28,7 @@ export default function ElectricalAppliance() {
     message: "",
     backgroundColor: "",
   });
+  const navigate = useNavigate();
   const itemsPerPage = 9;
   const electricalCollectionRef = collection(db, "electrical");
   const cartCtxt = useContext(CartContext);
@@ -78,6 +80,7 @@ export default function ElectricalAppliance() {
               key={electrical.id}
               sx={{
                 my: 2,
+                paddingBottom: 1,
                 width: 350,
                 height: 450,
                 boxShadow: theme.shadows[13],
@@ -98,14 +101,17 @@ export default function ElectricalAppliance() {
                   borderRadius: 0,
                 },
               }}
-              onClick={() => handleCardSelect(electrical.id)}>
+              onClick={() => {
+                handleCardSelect(electrical.id);
+                navigate(`/product/${electrical.id}`);
+              }}>
               <Grid item sx={{ my: 1 }}>
                 <Grid item container direction={"column"}>
                   <Grid item>
                     <CardMedia
                       component="img"
-                      height="300"
-                      width="300"
+                      height="250"
+                      width="250"
                       image={electrical.imageurl}
                       alt={electrical.description}
                     />
