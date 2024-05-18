@@ -10,6 +10,7 @@ import {
 } from "../../firebaseConfig.js";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
+  InputAdornment,
   TextField,
   Button,
   Box,
@@ -18,7 +19,11 @@ import {
   DialogContent,
   IconButton,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import {
+  Visibility,
+  VisibilityOff,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import Google from "../../assets/google.png";
 import Facebook from "../../assets/facebook.png";
 
@@ -29,7 +34,9 @@ function Login() {
   const [position, setPosition] = useState(null);
   const [user, loading, error] = useAuthState(auth);
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = React.useState(false);
 
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
   const [open, setOpen] = useState(false);
   const onClose = () => {
     setOpen(true);
@@ -170,8 +177,8 @@ function Login() {
         sx={{ my: 1, fontSize: "1.1rem" }}
       />
       <TextField
-        label="Password"
-        type="password"
+        id="outlined-adornment-password"
+        type={showPassword ? "text" : "password"}
         variant="outlined"
         fullWidth
         value={password}
@@ -182,7 +189,21 @@ function Login() {
             fontSize: "1.25rem",
           },
         }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={handleClickShowPassword}
+                edge="end">
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+        label="Password"
       />
+
       <Button
         variant="contained"
         onClick={() => {
@@ -208,7 +229,7 @@ function Login() {
       )}
 
       <Typography variant="h4" my={5}>
-        - or -
+        - OR -
       </Typography>
 
       <Box

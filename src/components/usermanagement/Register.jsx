@@ -4,7 +4,15 @@ import React, { useEffect, useState } from "react";
 import Google from "../../assets/google.png";
 import Facebook from "../../assets/facebook.png";
 import { NavLink, Link } from "react-router-dom";
-import { Box, TextField, Button, Typography } from "@mui/material";
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  IconButton,
+  InputAdornment,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
@@ -18,8 +26,10 @@ function Register() {
   const [user, loading, error] = useAuthState(auth);
   const [errors, setErrors] = useState([]);
   const [position, setPosition] = useState(null);
+  const [showPassword, setShowPassword] = React.useState(false);
   const navigate = useNavigate();
 
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
   const [values, setValues] = useState({
     name: "",
     email: "",
@@ -141,16 +151,34 @@ function Register() {
         sx={{ my: 1 }}
       />
       <TextField
-        label="Password"
+        id="outlined-adornment-password"
+        type={showPassword ? "text" : "password"}
         variant="outlined"
         fullWidth
         margin="normal"
-        type="password"
         value={values.password}
         onChange={handleChange}
         placeholder="Password"
         name="password"
-        sx={{ my: 1 }}
+        sx={{
+          my: 1,
+          "& .MuiInputBase-input": {
+            fontSize: "1.25rem",
+          },
+        }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={handleClickShowPassword}
+                edge="end">
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+        label="Password"
       />
       <Button variant="contained" onClick={register} sx={{ my: 1 }}>
         Register

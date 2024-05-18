@@ -312,6 +312,7 @@ export default function Header() {
             status: "pending",
             driverId: null,
             orderId: randomOrderNumber,
+            deliverToCustomer:false,
             createdAt: new Date(),
           });
           setShippingAddress(initialShippingAddress);

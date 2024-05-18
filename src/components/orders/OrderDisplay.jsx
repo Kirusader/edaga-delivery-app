@@ -28,7 +28,6 @@ import {
 import { useLocationData } from "../../store/LocationContext";
 import {
   GoogleMap,
-  InfoWindowF,
   MarkerF,
   useJsApiLoader,
   DirectionsRenderer,
@@ -36,16 +35,14 @@ import {
 const libraries = ["places"];
 const OrderDisplay = () => {
   const [orders, setOrders] = useState([]);
-  const [activeOrder, setActiveOrder] = useState([]);
   const [map, setMap] = useState(null);
   const [position, setPosition] = useState(null);
-  const [showInfoWindow, setShowInfoWindow] = useState(false);
   const [directionsResponse, setDirectionsResponse] = useState(null);
-  const [distance, setDistance] = useState("");
-  const [duration, setDuration] = useState("");
+  const [customerAddress, setCustomerAddress] = useState(null);
   const [address, setAddress] = useState("");
   const [destinationPosition, setDestinationPosition] = useState(null);
-  const [user, loading, error] = useAuthState(auth);
+  const [riderLocation, setRiderLocation] = useState(null);
+  const [user] = useAuthState(auth);
   const { locationInfo } = useLocationData();
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyBE5toRhLbV5gPCwpGCM-jyPz1o7a7NEEM",
@@ -66,15 +63,40 @@ const OrderDisplay = () => {
     getOrders();
   }, []);
   useEffect(() => {
-    async function getActiveOrder() {
-      if (!locationInfo) return;
-      const ordersCollectionRef = await query(
-        collection(db, "orders"),
-        where("driverId", "==", locationInfo.riderId)
+    if (user) {
+      // Define the query to search for the orders associated with the user
+      const orderRef = collection(db, "orders");
+      const orderQueryRef = query(
+        orderRef,
+        where("uid", "==", user?.uid),
+        where("status", "==", "collected")
       );
+
+      // Listen for real-time updates using the order query
+      const orderUnsubscribe = onSnapshot(
+        orderQueryRef,
+        (orderQuerySnapshot) => {
+          if (!orderQuerySnapshot.empty) {
+            const orderData = orderQuerySnapshot.docs[0].data();
+
+            setRiderLocation({ lat: orderData.lat, lng: orderData.lng });
+            setCustomerAddress(
+              `${orderData.street},${orderData.postalCode},${orderData.city},${orderData.country}`
+            );
+          } else {
+            setRiderLocation(null);
+          }
+        },
+        (orderError) => {
+          console.error("Firestore error:", orderError);
+        }
+      );
+
+      return () => {
+        orderUnsubscribe();
+      };
     }
-    getActiveOrder();
-  }, [locationInfo]);
+  }, [user]);
   useEffect(() => {
     if (!isLoaded) return;
     if ("geolocation" in navigator) {
@@ -93,10 +115,10 @@ const OrderDisplay = () => {
   }, [isLoaded]);
 
   useEffect(() => {
-    if (!isLoaded || !position) return; // Check if API is loaded and position is available
+    if (!isLoaded || !position || !riderLocation) return; // Check if API is loaded and position is available
 
     const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: locationInfo.location }, (results, status) => {
+    geocoder.geocode({ location: riderLocation }, (results, status) => {
       if (status === "OK") {
         if (results[0]) {
           setAddress(results[0].formatted_address);
@@ -107,27 +129,28 @@ const OrderDisplay = () => {
         console.log("Geocoder failed due to: " + status);
       }
     });
-  }, [position, isLoaded]);
+  }, [position, isLoaded, riderLocation]);
   useEffect(() => {
-    if (!directionsResponse) return;
+    if (!isLoaded || !customerAddress) return;
 
+    // Initialize the Geocoder
     const geocoder = new window.google.maps.Geocoder();
-    const end_address = directionsResponse.routes[0].legs[0].end_address;
-    geocoder.geocode({ address: end_address }, (results, status) => {
+
+    // Call the geocode method with the address
+    geocoder.geocode({ address: customerAddress }, (results, status) => {
       if (status === "OK") {
-        if (results[0]) {
-          setDestinationPosition({
-            lat: results[0].geometry.location.lat(),
-            lng: results[0].geometry.location.lng(),
-          });
-        } else {
-          console.log("No results found");
-        }
+        // Extract latitude and longitude from the first result
+        const location = results[0].geometry.location;
+        const latitude = location.lat();
+        const longitude = location.lng();
+
+        // Set the destination position to the obtained latitude and longitude
+        setDestinationPosition({ lat: latitude, lng: longitude });
       } else {
-        console.log("Geocoder failed due to: " + status);
+        console.error("Geocoder failed due to: " + status);
       }
     });
-  }, [directionsResponse]);
+  }, [isLoaded,customerAddress]);
 
   let options;
   if (isLoaded) {
@@ -144,14 +167,13 @@ const OrderDisplay = () => {
   }
   async function viewOrderLocation() {
     const directionsService = new google.maps.DirectionsService();
+    if (!position || !riderLocation) return;
     const results = await directionsService.route({
       origin: address,
-      destination: "344 Great Western Street, Mosside, Manchester M18 7HJ, UK",
+      destination: customerAddress,
       travelMode: google.maps.TravelMode.DRIVING,
     });
     setDirectionsResponse(results);
-    setDistance(results.routes[0].legs[0].distance.text);
-    setDuration(results.routes[0].legs[0].duration.text);
   }
 
   const handleLoad = (mapInstance) => {
@@ -161,8 +183,7 @@ const OrderDisplay = () => {
     setMap(null);
     console.log("Map unmounted");
   };
-  console.log(locationInfo.location);
-  console.log(locationInfo);
+
   return (
     <>
       <TableContainer component={Paper}>
@@ -215,11 +236,14 @@ const OrderDisplay = () => {
           </TableBody>
         </Table>
       </TableContainer>
-      <Box>
-        <Button onClick={() => viewOrderLocation()}>
-          <Typography variant="subtitle2">View Order Location</Typography>
-        </Button>
-      </Box>
+      {orders.length > 0 && riderLocation !== null && (
+        <Box>
+          <Button onClick={() => viewOrderLocation()}>
+            <Typography variant="subtitle2">View Order Location</Typography>
+          </Button>
+        </Box>
+      )}
+
       <Box sx={{ mx: "auto", my: 4 }}>
         <Box
           sx={{
@@ -256,7 +280,7 @@ const OrderDisplay = () => {
               />
             )}
             {directionsResponse && (
-              <MarkerF position={locationInfo.location} icon={driverIcon} />
+              <MarkerF position={riderLocation} icon={driverIcon} />
             )}
             {directionsResponse && (
               <MarkerF position={destinationPosition} icon={personIcon} />
