@@ -16,7 +16,7 @@ import {
 import { useState } from "react";
 import { db } from "../../firebaseConfig";
 import { addDoc, collection } from "firebase/firestore";
-
+import { useTheme } from "@mui/material/styles";
 const companyTypes = [
   { label: "Food" },
   { label: "Electrical & home appliance" },
@@ -28,6 +28,7 @@ const companyTypes = [
 ];
 
 export default function RegisterCompany() {
+  const theme = useTheme();
   const [ownerType, setOwnerType] = useState("");
   const [deliveryInfo, setDeliveryInfo] = useState("");
   const [useOtherDeliveryService, setUseOtherDeliveryService] = useState("");
@@ -168,12 +169,14 @@ export default function RegisterCompany() {
       direction={"column"}
       justifyContent={"center"}
       alignItems={"center"}
-      sx={{ width: "100%", bgcolor: "#6DCFF6" }}>
+      sx={{ width: "100%", bgcolor: "#6DCFF6", p: 2 }}>
       <Grid item>
-        <Typography variant="h2">Let&apos;s get started</Typography>
+        <Typography variant="h2" align="center">
+          Let&apos;s get started
+        </Typography>
       </Grid>
       <Grid item>
-        <Typography variant="subtitle2">
+        <Typography variant="subtitle2" align="center">
           We help you serve genuine customers far and wide. Ready to partner
           with us and grow your business!!
         </Typography>
@@ -181,11 +184,12 @@ export default function RegisterCompany() {
       <Grid
         item
         sx={{
-          width: "90%",
+          width: { xs: "100%", md: "90%" },
           mx: "auto",
           backgroundColor: "background.paper",
           borderRadius: 2,
-          px: 4,
+          px: { xs: 2, md: 4 },
+          py: 3,
           my: 3,
         }}>
         <Grid item container direction={"column"}>
@@ -196,7 +200,7 @@ export default function RegisterCompany() {
               direction={"column"}
               justifyContent={"space-between"}>
               <Grid item>
-                <Typography variant="h2">
+                <Typography variant="h2" align="center">
                   Enter your company’s street address
                 </Typography>
               </Grid>
@@ -215,7 +219,7 @@ export default function RegisterCompany() {
                   onChange={handleInputChange}
                   error={!!companyDetails.errors.address}
                   helperText={companyDetails.errors.address}
-                  sx={{ width: "80%", my: 2 }}
+                  sx={{ width: { xs: "100%", md: "80%" }, my: 2, mx: "auto" }}
                 />
               </Grid>
             </Grid>
@@ -227,11 +231,13 @@ export default function RegisterCompany() {
               direction={"column"}
               justifyContent={"space-around"}>
               <Grid item>
-                <Typography variant="h2">Enter your company details</Typography>
+                <Typography variant="h2" align="center">
+                  Enter your company details
+                </Typography>
               </Grid>
               <Grid item>
                 <Grid item container justifyContent={"space-between"}>
-                  <Grid item>
+                  <Grid item xs={12} md={6}>
                     <Grid item container direction={"column"}>
                       <Grid item>
                         <Typography variant="subtitle2">
@@ -248,14 +254,22 @@ export default function RegisterCompany() {
                           onChange={handleInputChange}
                           error={!!companyDetails.errors.companyName}
                           helperText={companyDetails.errors.companyName}
-                          sx={{ mb: 2 }}
+                          sx={{ width: "100%", my: 2 }}
                         />
                       </Grid>
                     </Grid>
                   </Grid>
 
-                  <Grid item>
-                    <Grid item container direction={"column"}>
+                  <Grid item xs={12} md={6}>
+                    <Grid
+                      item
+                      container
+                      direction={"column"}
+                      sx={{
+                        [theme.breakpoints.up("md")]: {
+                          marginLeft: 2,
+                        },
+                      }}>
                       <Grid item>
                         <Typography variant="subtitle2">
                           Company type
@@ -265,7 +279,7 @@ export default function RegisterCompany() {
                         <Autocomplete
                           disablePortal
                           id="combo-box-demo"
-                          sx={{ width: 300, my: 2 }}
+                          sx={{ width: "100%", my: 2 }}
                           value={companyDetails.companyType}
                           onChange={handleAutocompleteChange}
                           options={companyTypes}
@@ -290,7 +304,9 @@ export default function RegisterCompany() {
           <Grid item>
             <Grid item container direction={"column"}>
               <Grid item>
-                <Typography variant="h2">About your company</Typography>
+                <Typography variant="h2" align="center">
+                  About your company
+                </Typography>
               </Grid>
               <Grid item sx={{ width: "100%" }}>
                 <FormControl component="fieldset">
@@ -300,14 +316,14 @@ export default function RegisterCompany() {
                     value={deliveryInfo}
                     onChange={handleRadioChange}>
                     <Grid item container justifyContent={"space-around"}>
-                      <Grid item lg={6}>
+                      <Grid item xs={12} md={6}>
                         <FormControlLabel
                           value="no delivery"
                           control={<Radio />}
                           label="Does not deliver"
                         />
                       </Grid>
-                      <Grid item lg={6}>
+                      <Grid item xs={12} md={6}>
                         <FormControlLabel
                           value="has delivery"
                           control={<Radio />}
@@ -323,7 +339,7 @@ export default function RegisterCompany() {
           <Grid item>
             <Grid item container direction={"column"}>
               <Grid item>
-                <Typography variant="h2">
+                <Typography variant="h2" align="center">
                   Are you using any other company for delivery service?
                 </Typography>
               </Grid>
@@ -339,14 +355,14 @@ export default function RegisterCompany() {
                       container
                       justifyContent={"space-around"}
                       sx={{ width: "100%" }}>
-                      <Grid item>
+                      <Grid item xs={12} md={6}>
                         <FormControlLabel
                           value="has delivery partner"
                           control={<Radio />}
                           label="Uses other delivery partner"
                         />
                       </Grid>
-                      <Grid item>
+                      <Grid item xs={12} md={6}>
                         <FormControlLabel
                           value="has no delivery partner"
                           control={<Radio />}
@@ -363,11 +379,13 @@ export default function RegisterCompany() {
           <Grid item>
             <Grid item container direction={"column"}>
               <Grid item>
-                <Typography variant="h2">Enter your contact details</Typography>
+                <Typography variant="h2" align="center">
+                  Enter your contact details
+                </Typography>
               </Grid>
               <Grid item>
                 <Grid item container justifyContent={"space-between"}>
-                  <Grid item>
+                  <Grid item xs={12} md={6}>
                     <Grid item container direction={"column"}>
                       <Grid item>
                         <Grid item container direction={"column"}>
@@ -379,7 +397,7 @@ export default function RegisterCompany() {
                           <Grid item>
                             <TextField
                               fullWidth
-                              sx={{ width: 400, my: 2 }}
+                              sx={{ width: "100%", my: 2 }}
                               variant="outlined"
                               label="full name"
                               placeholder="Enter your full name"
@@ -401,7 +419,7 @@ export default function RegisterCompany() {
                           </Grid>
                           <Grid item>
                             <TextField
-                              sx={{ width: 400, my: 2 }}
+                              sx={{ width: "100%", my: 2 }}
                               select
                               variant="outlined"
                               label="role"
@@ -418,8 +436,16 @@ export default function RegisterCompany() {
                       </Grid>
                     </Grid>
                   </Grid>
-                  <Grid item>
-                    <Grid item container direction={"column"}>
+                  <Grid item xs={12} md={6}>
+                    <Grid
+                      item
+                      container
+                      direction={"column"}
+                      sx={{
+                        [theme.breakpoints.up("md")]: {
+                          marginLeft: 2,
+                        },
+                      }}>
                       <Grid item>
                         <Grid item container direction={"column"}>
                           <Grid item>
@@ -438,7 +464,7 @@ export default function RegisterCompany() {
                               onChange={handleInputChange}
                               error={!!companyDetails.errors.email}
                               helperText={companyDetails.errors.email}
-                              sx={{ width: 400, my: 2 }}
+                              sx={{ width: "100%", my: 2 }}
                             />
                           </Grid>
                         </Grid>
@@ -460,7 +486,7 @@ export default function RegisterCompany() {
                               onChange={handleInputChange}
                               error={!!companyDetails.errors.phone}
                               helperText={companyDetails.errors.phone}
-                              sx={{ mb: 2 }}
+                              sx={{ width: "100%", my: 2 }}
                             />
                           </Grid>
                           <Grid item>

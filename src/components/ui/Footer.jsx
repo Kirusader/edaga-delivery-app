@@ -2,7 +2,7 @@
 
 import { Button, Grid, Typography, IconButton } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppStoreImg from "../../assets/appstore.jpg";
 import PlayStoreImg from "../../assets/playstore.jpg";
 import {
@@ -27,6 +27,7 @@ const categories = [
   { menu: "Stationary", link: "/stationary" },
 ];
 export default function Footer() {
+  const navigate = useNavigate();
   return (
     <Grid
       container
@@ -92,7 +93,10 @@ export default function Footer() {
             </Button>
           </Grid>
           <Grid item>
-            <Button component={Link} to="/return">
+            <Button
+              onClick={() => {
+                navigate("/return");
+              }}>
               <Typography variant="subtitle1">Return policy</Typography>
             </Button>
           </Grid>
@@ -135,7 +139,7 @@ export default function Footer() {
             </Button>
           </Grid>
           <Grid item>
-            <Button component={Link} to="/faqs">
+            <Button component={Link} to="/help">
               <Typography variant="subtitle1">FAQs</Typography>
             </Button>
           </Grid>

@@ -24,8 +24,6 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-
-import { useLocationData } from "../../store/LocationContext";
 import {
   GoogleMap,
   MarkerF,
@@ -43,7 +41,6 @@ const OrderDisplay = () => {
   const [destinationPosition, setDestinationPosition] = useState(null);
   const [riderLocation, setRiderLocation] = useState(null);
   const [user] = useAuthState(auth);
-  const { locationInfo } = useLocationData();
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyBE5toRhLbV5gPCwpGCM-jyPz1o7a7NEEM",
     libraries,
@@ -115,8 +112,7 @@ const OrderDisplay = () => {
   }, [isLoaded]);
 
   useEffect(() => {
-    if (!isLoaded || !position || !riderLocation) return; // Check if API is loaded and position is available
-
+    if (!isLoaded || !position || !riderLocation) return;
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ location: riderLocation }, (results, status) => {
       if (status === "OK") {
@@ -150,7 +146,7 @@ const OrderDisplay = () => {
         console.error("Geocoder failed due to: " + status);
       }
     });
-  }, [isLoaded,customerAddress]);
+  }, [isLoaded, customerAddress]);
 
   let options;
   if (isLoaded) {
@@ -238,7 +234,7 @@ const OrderDisplay = () => {
       </TableContainer>
       {orders.length > 0 && riderLocation !== null && (
         <Box>
-          <Button onClick={() => viewOrderLocation()}>
+          <Button variant="contained" color="success" onClick={() => viewOrderLocation()} sx={{m:4,marginBottom:0}}>
             <Typography variant="subtitle2">View Order Location</Typography>
           </Button>
         </Box>
@@ -247,11 +243,24 @@ const OrderDisplay = () => {
       <Box sx={{ mx: "auto", my: 4 }}>
         <Box
           sx={{
-            height: "50vh", // Adjusted for demonstration
-            width: "100%", // Use 100% to fill the container width
+            height: "50vh",
+            width: "100%",
           }}>
           <GoogleMap
-            center={{ lat: 53.48, lng: -2.24 }}
+            center={
+              directionsResponse
+                ? {
+                    lat:
+                      (directionsResponse.routes[0].legs[0].end_location.lat() +
+                        directionsResponse.routes[0].legs[0].start_location.lat()) /
+                      2,
+                    lng:
+                      (directionsResponse.routes[0].legs[0].end_location.lng() +
+                        directionsResponse.routes[0].legs[0].start_location.lng()) /
+                      2,
+                  }
+                : { lat: 53.48, lng: -2.24 }
+            }
             zoom={13}
             mapContainerStyle={{ width: "100%", height: "100%" }}
             onLoad={handleLoad}
@@ -264,21 +273,24 @@ const OrderDisplay = () => {
               rotateControl: true,
               fullscreenControl: true,
             }}>
-            {directionsResponse && destinationPosition && (
-              <DirectionsRenderer
-                directions={directionsResponse}
-                options={{
-                  markerOptions: { icon: personIcon },
-                  polylineOptions: {
-                    strokeColor: "#FF0000",
-                    strokeOpacity: 0.8,
-                    strokeWeight: 4,
-                  },
-                  suppressMarkers: true,
-                  suppressInfoWindows: true,
-                }}
-              />
-            )}
+            {orders.length > 0 &&
+              riderLocation !== null &&
+              directionsResponse &&
+              destinationPosition && (
+                <DirectionsRenderer
+                  directions={directionsResponse}
+                  options={{
+                    markerOptions: { icon: personIcon },
+                    polylineOptions: {
+                      strokeColor: "#FF0000",
+                      strokeOpacity: 0.8,
+                      strokeWeight: 4,
+                    },
+                    suppressMarkers: true,
+                    suppressInfoWindows: true,
+                  }}
+                />
+              )}
             {directionsResponse && (
               <MarkerF position={riderLocation} icon={driverIcon} />
             )}

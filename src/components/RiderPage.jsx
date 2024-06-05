@@ -2,10 +2,9 @@
 
 import personIcon from "../assets/person.svg";
 import restaurantIcon from "../assets/restaurant.svg";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   GoogleMap,
-  InfoWindowF,
   MarkerF,
   useJsApiLoader,
   DirectionsRenderer,
@@ -18,6 +17,8 @@ import {
   updateDoc,
   getDocs,
   doc,
+  limit,
+  orderBy,
 } from "firebase/firestore";
 import {
   Grid,
@@ -39,13 +40,10 @@ import { db, auth } from "../firebaseConfig";
 
 const libraries = ["places"];
 
-const RiderPage2 = () => {
+const RiderPage = () => {
   const [map, setMap] = useState(null);
   const [position, setPosition] = useState(null);
-  const [showInfoWindow, setShowInfoWindow] = useState(false);
   const [directionsResponse, setDirectionsResponse] = useState(null);
-  const [distance, setDistance] = useState("");
-  const [duration, setDuration] = useState("");
   const [address, setAddress] = useState("");
   const [destinationPosition, setDestinationPosition] = useState(null);
   const [open, setOpen] = useState(false);
@@ -56,119 +54,164 @@ const RiderPage2 = () => {
   const [deliverToCustomer, setDeliverToCustomer] = useState(false);
   const [customerAddress, setCustomerAddress] = useState(null);
   const [companyAddress, setCompanyAddress] = useState(null);
+  const [mapKey, setMapKey] = useState(0);
+  const [directionsKey, setDirectionsKey] = useState(0);
+  const [showDirections, setShowDirections] = useState(true);
+  const [activeOrderId, setActiveOrderId] = useState(null);
   const [user] = useAuthState(auth);
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyBE5toRhLbV5gPCwpGCM-jyPz1o7a7NEEM",
     libraries,
+    region: "UK",
+    language: "en",
   });
 
-  useEffect(() => {
+  const fetchCompanyAddress = useCallback(() => {
     if (!isLoaded) return;
-    const myGeocoder = new window.google.maps.Geocoder();
-    const storeAddress = "104 Greame Street,M14 4RN, Manchester, UK";
-    myGeocoder.geocode({ address: storeAddress }, (results, status) => {
+    const geocoder = new window.google.maps.Geocoder();
+    const storeAddress = "104 Greame Street, M14 4RN, Manchester, UK";
+    geocoder.geocode({ address: storeAddress }, (results, status) => {
       if (status === "OK" && results[0]) {
         setCompanyAddress({
           lat: results[0].geometry.location.lat(),
           lng: results[0].geometry.location.lng(),
         });
+      } else {
+        console.error("Geocode error: ", status);
       }
     });
   }, [isLoaded]);
 
-  useEffect(() => {
-    if (user) {
-      const usersRef = collection(db, "users");
-      const userQueryRef = query(usersRef, where("uid", "==", user.uid));
-      const userUnsubscribe = onSnapshot(userQueryRef, (userQuerySnapshot) => {
-        if (!userQuerySnapshot.empty) {
-          const userData = userQuerySnapshot.docs[0].data();
-          setIsRiderActive(userData.isActive);
-        }
-      });
-      const orderRef = collection(db, "orders");
-      const orderQueryRef = query(orderRef, where("driverId", "==", user.uid));
-      const orderUnsubscribe = onSnapshot(
-        orderQueryRef,
-        (orderQuerySnapshot) => {
-          if (!orderQuerySnapshot.empty) {
-            const orderData = orderQuerySnapshot.docs[0].data();
-            setDeliverToCustomer(orderData.deliverToCustomer);
-          }
-        }
-      );
-      return () => {
-        userUnsubscribe();
-        orderUnsubscribe();
-      };
-    }
+  const fetchUserData = useCallback(() => {
+    if (!user) return;
+    const usersRef = collection(db, "users");
+    const userQueryRef = query(usersRef, where("uid", "==", user.uid));
+    const unsubscribe = onSnapshot(userQueryRef, (snapshot) => {
+      if (!snapshot.empty) {
+        const userData = snapshot.docs[0].data();
+        setIsRiderActive(userData.isActive);
+      }
+    });
+    return unsubscribe;
   }, [user]);
 
-  useEffect(() => {
-    if (!isRiderActive) {
-      const q = query(collection(db, "orders"), where("driverId", "==", null));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const ordersData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setOrders(ordersData);
-      });
-      return () => unsubscribe();
-    }
+  const fetchLatestOrder = useCallback(() => {
+    if (!user) return;
+    const orderRef = collection(db, "orders");
+    const orderQueryRef = query(
+      orderRef,
+      where("driverId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+    const unsubscribe = onSnapshot(orderQueryRef, (snapshot) => {
+      if (!snapshot.empty) {
+        const orderData = snapshot.docs[0].data();
+        setDeliverToCustomer(orderData.deliverToCustomer);
+        setActiveOrderId(orderData.orderId);
+      }
+    });
+    return unsubscribe;
+  }, [user]);
+
+  const fetchAvailableOrders = useCallback(() => {
+    if (isRiderActive) return;
+    const q = query(collection(db, "orders"), where("driverId", "==", null));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const ordersData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setOrders(ordersData);
+    });
+    return unsubscribe;
   }, [isRiderActive]);
 
-  useEffect(() => {
-    if (user) {
-      const ordersQuery = query(
-        collection(db, "orders"),
-        where("driverId", "==", user.uid),
-        where("status", "==", "pending")
-      );
-      const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
-        const ordersData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        if (ordersData.length > 0) {
-          setActiveOrders(ordersData);
-          const firstOrder = ordersData[0];
-          setCustomerAddress(
-            `${firstOrder.street || ""},${firstOrder.postalCode || ""},${
-              firstOrder.city || ""
-            },${firstOrder.country || ""}`
-          );
-        }
-      });
-      return () => unsubscribe();
-    }
-  }, [user]);
+  const fetchPendingOrders = useCallback(() => {
+    if (!user) return;
+    const ordersQuery = query(
+      collection(db, "orders"),
+      where("driverId", "==", user.uid),
+      where("status", "==", "pending"),
+      where("orderId", "==", activeOrderId),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+      const ordersData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      if (ordersData.length > 0) {
+        setActiveOrders(ordersData);
+        const firstOrder = ordersData[0];
+        setCustomerAddress(
+          `${firstOrder.street || ""},${firstOrder.postalCode || ""},${
+            firstOrder.city || ""
+          },${firstOrder.country || ""}`
+        );
+      }
+    });
+    return unsubscribe;
+  }, [user, activeOrderId]);
+
+  const fetchCollectedOrders = useCallback(() => {
+    if (!user) return;
+    const ordersQuery = query(
+      collection(db, "orders"),
+      where("driverId", "==", user.uid),
+      where("status", "==", "collected"),
+      where("orderId", "==", activeOrderId),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+      const ordersData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      if (ordersData.length > 0) {
+        setCollectedOrders(ordersData);
+        const firstOrder = ordersData[0];
+        setCustomerAddress(
+          `${firstOrder.street || ""},${firstOrder.postalCode || ""},${
+            firstOrder.city || ""
+          },${firstOrder.country || ""}`
+        );
+      }
+    });
+    return unsubscribe;
+  }, [user, activeOrderId]);
 
   useEffect(() => {
-    if (user) {
-      const ordersQuery = query(
-        collection(db, "orders"),
-        where("driverId", "==", user.uid),
-        where("status", "==", "collected")
-      );
-      const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
-        const ordersData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        if (ordersData.length > 0) {
-          setCollectedOrders(ordersData);
-          const firstOrder = ordersData[0];
-          setCustomerAddress(
-            `${firstOrder.street || ""},${firstOrder.postalCode || ""},${
-              firstOrder.city || ""
-            },${firstOrder.country || ""}`
-          );
-        }
-      });
-      return () => unsubscribe();
-    }
-  }, [user]);
+    fetchCompanyAddress();
+  }, [fetchCompanyAddress]);
+
+  useEffect(() => {
+    const unsubscribeUser = fetchUserData();
+    return () => unsubscribeUser && unsubscribeUser();
+  }, [fetchUserData]);
+
+  useEffect(() => {
+    const unsubscribeOrder = fetchLatestOrder();
+    return () => unsubscribeOrder && unsubscribeOrder();
+  }, [fetchLatestOrder]);
+
+  useEffect(() => {
+    const unsubscribeAvailableOrders = fetchAvailableOrders();
+    return () => unsubscribeAvailableOrders && unsubscribeAvailableOrders();
+  }, [fetchAvailableOrders]);
+
+  useEffect(() => {
+    const unsubscribePendingOrders = fetchPendingOrders();
+    return () => unsubscribePendingOrders && unsubscribePendingOrders();
+  }, [fetchPendingOrders]);
+
+  useEffect(() => {
+    const unsubscribeCollectedOrders = fetchCollectedOrders();
+    return () => unsubscribeCollectedOrders && unsubscribeCollectedOrders();
+  }, [fetchCollectedOrders]);
 
   useEffect(() => {
     if (orders.length > 0 && !isRiderActive) {
@@ -180,10 +223,10 @@ const RiderPage2 = () => {
     if (!isLoaded) return;
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        (pos) => {
           setPosition({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
           });
         },
         (err) => console.error(err)
@@ -197,6 +240,8 @@ const RiderPage2 = () => {
     geocoder.geocode({ location: position }, (results, status) => {
       if (status === "OK" && results[0]) {
         setAddress(results[0].formatted_address);
+      } else {
+        console.error("Geocode error: ", status);
       }
     });
   }, [position, isLoaded]);
@@ -210,36 +255,42 @@ const RiderPage2 = () => {
           lat: results[0].geometry.location.lat(),
           lng: results[0].geometry.location.lng(),
         });
+      } else {
+        console.error("Geocode error: ", status);
       }
     });
-  }, [collectedOrders, isLoaded]);
+  }, [collectedOrders, isLoaded, customerAddress]);
 
   useEffect(() => {
-    async function calculateRoute() {
+    const calculateRoute = async () => {
       if (!address || !isLoaded) return;
       const directionsService = new google.maps.DirectionsService();
-      let results;
-      if (isRiderActive && !deliverToCustomer) {
-        results = await directionsService.route({
-          origin: address,
-          destination: "112 Greame Street,M14 4RN, Manchester, UK",
-          travelMode: google.maps.TravelMode.DRIVING,
-        });
-        setDirectionsResponse(results);
-        fitBoundsToRoute(results);
-      } else if (deliverToCustomer) {
-        if (!customerAddress || !address) return;
-        results = await directionsService.route({
-          origin: address,
-          destination: customerAddress,
-          travelMode: google.maps.TravelMode.DRIVING,
-        });
-        setDirectionsResponse(results);
-        fitBoundsToRoute(results);
+      try {
+        let results;
+        if (isRiderActive && !deliverToCustomer) {
+          results = await directionsService.route({
+            origin: address,
+            destination: "112 Greame Street, M14 4RN, Manchester, UK",
+            travelMode: google.maps.TravelMode.DRIVING,
+          });
+        } else if (deliverToCustomer && customerAddress) {
+          results = await directionsService.route({
+            origin: address,
+            destination: customerAddress,
+            travelMode: google.maps.TravelMode.DRIVING,
+          });
+        }
+        if (results) {
+          setDirectionsResponse(results);
+          setDirectionsKey((prevKey) => prevKey + 1);
+          fitBoundsToRoute(results);
+        }
+      } catch (error) {
+        console.error("Error calculating route:", error);
       }
-    }
+    };
     calculateRoute();
-  }, [address, isLoaded, customerAddress]);
+  }, [address, isLoaded, customerAddress, isRiderActive, deliverToCustomer]);
 
   const fitBoundsToRoute = (results) => {
     if (!results || !map) return;
@@ -248,22 +299,21 @@ const RiderPage2 = () => {
       bounds.extend(leg.start_location);
       bounds.extend(leg.end_location);
     });
-    console.log("Fitting bounds to:", bounds);
     map.fitBounds(bounds);
   };
 
   useEffect(() => {
-    const getPosition = async () => {
-      if (position) {
+    const updateOrderPosition = async () => {
+      if (position && activeOrderId) {
         const ordersQuery = query(
           collection(db, "orders"),
           where("driverId", "==", user.uid),
-          where("status", "==", "collected")
+          where("status", "==", "collected"),
+          where("orderId", "==", activeOrderId)
         );
-        const unsubscribe = onSnapshot(ordersQuery, async (querySnapshot) => {
-          querySnapshot.forEach(async (snapshot) => {
-            const orderDocId = snapshot.id;
-            const orderDocRef = doc(db, "orders", orderDocId);
+        const unsubscribe = onSnapshot(ordersQuery, async (snapshot) => {
+          for (const docSnapshot of snapshot.docs) {
+            const orderDocRef = doc(db, "orders", docSnapshot.id);
             try {
               await updateDoc(orderDocRef, {
                 lat: position.lat,
@@ -272,13 +322,13 @@ const RiderPage2 = () => {
             } catch (error) {
               console.error("Failed to update order:", error);
             }
-          });
+          }
         });
         return unsubscribe;
       }
     };
-    getPosition();
-  }, [db, user, position]);
+    updateOrderPosition();
+  }, [position, user, activeOrderId]);
 
   if (!isLoaded || !position) {
     return <CircularProgress />;
@@ -309,12 +359,21 @@ const RiderPage2 = () => {
       setIsRiderActive(true);
       setOpen(false);
     }
-    window.location.reload();
+    setMapKey((prevKey) => prevKey + 1);
+    setDirectionsKey((prevKey) => prevKey + 1);
+    setShowDirections(true);
   };
 
   const handleCollect = async () => {
     const orderRef = collection(db, "orders");
-    const q = query(orderRef, where("driverId", "==", user.uid));
+    const q = query(
+      orderRef,
+      where("driverId", "==", user.uid),
+      where("status", "==", "pending"),
+      where("orderId", "==", activeOrderId),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const orderDocId = querySnapshot.docs[0].id;
@@ -323,19 +382,39 @@ const RiderPage2 = () => {
         status: "collected",
         deliverToCustomer: true,
       });
+      console.log("Order collected:", orderDocId);
     }
-    window.location.reload();
+    setMapKey((prevKey) => prevKey + 1);
+    setDirectionsKey((prevKey) => prevKey + 1);
+    console.log(
+      "Map and Directions keys updated after collect:",
+      mapKey,
+      directionsKey
+    );
   };
 
-  const handleDeliver = async (orderId) => {
+  const handleDeliver = async () => {
     try {
-      const orderRef = doc(db, "orders", orderId);
-      await updateDoc(orderRef, {
-        status: "delivered",
-        deliverToCustomer: false,
-        lat: 0,
-        lng: 0,
-      });
+      const orderRef = collection(db, "orders");
+      const orderQuery = query(
+        orderRef,
+        where("driverId", "==", user.uid),
+        where("status", "==", "collected"),
+        where("orderId", "==", activeOrderId),
+        orderBy("createdAt", "desc"),
+        limit(1)
+      );
+      const querySnapshotOrder = await getDocs(orderQuery);
+      if (!querySnapshotOrder.empty) {
+        const orderDocId = querySnapshotOrder.docs[0].id;
+        const orderDocRef = doc(db, "orders", orderDocId);
+        await updateDoc(orderDocRef, {
+          status: "delivered",
+          deliverToCustomer: false,
+          lat: 0,
+          lng: 0,
+        });
+      }
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("uid", "==", user.uid));
       const querySnapshot = await getDocs(q);
@@ -348,16 +427,22 @@ const RiderPage2 = () => {
         setIsRiderActive(false);
         setOpen(false);
       }
+      setMapKey((prevKey) => prevKey + 1);
+      setDirectionsKey((prevKey) => prevKey + 1);
+      setShowDirections(false);
     } catch (error) {
       console.error("Failed to deliver order:", error);
+      alert(
+        "An error occurred while trying to deliver the order. Please try again."
+      );
     }
-    window.location.reload();
   };
 
   return (
     <Box sx={{ mx: "auto", my: 4 }}>
       <Box sx={{ height: "60vh", width: "100%" }}>
         <GoogleMap
+          key={mapKey}
           center={
             directionsResponse
               ? {
@@ -384,22 +469,9 @@ const RiderPage2 = () => {
             rotateControl: true,
             fullscreenControl: true,
           }}>
-          <MarkerF
-            position={position}
-            icon={personIcon}
-            onClick={() => setShowInfoWindow(true)}>
-            {showInfoWindow && (
-              <InfoWindowF position={position}>
-                <Typography>
-                  Current position Latitude: {position.lat}, Longitude:{" "}
-                  {position.lng}
-                </Typography>
-                <Button onClick={() => setShowInfoWindow(false)}>Close</Button>
-              </InfoWindowF>
-            )}
-          </MarkerF>
-          {directionsResponse && (
+          {showDirections && directionsResponse && (
             <DirectionsRenderer
+              key={directionsKey}
               directions={directionsResponse}
               options={{
                 markerOptions: { icon: personIcon },
@@ -413,6 +485,7 @@ const RiderPage2 = () => {
               }}
             />
           )}
+
           {directionsResponse && (
             <MarkerF position={position} icon={personIcon} />
           )}
@@ -456,22 +529,19 @@ const RiderPage2 = () => {
                           </Typography>
                         </Grid>
                         <Grid item>
-                          {" "}
                           <Typography variant="h6" sx={{ my: 4 }}>
                             {orders[0].street},{orders[0].postalCode},
                             {orders[0].city}
                           </Typography>
                         </Grid>
                         <Grid item>
-                          <Typography variant="subititle1">
+                          <Typography variant="subtitle1">
                             Total Item in the Order:
                             <span style={{ alignSelf: "center" }}>
-                              {" "}
                               {orders[0].items[0].quantity}
                             </span>
                           </Typography>
                         </Grid>
-                        <Grid item> </Grid>
                       </Grid>
                     </ListItem>
                   ) : (
@@ -523,4 +593,4 @@ const RiderPage2 = () => {
   );
 };
 
-export default RiderPage2;
+export default RiderPage;

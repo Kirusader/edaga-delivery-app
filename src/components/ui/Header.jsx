@@ -1,4 +1,5 @@
 /** @format */
+
 import React, { useState, useContext, useEffect, useRef } from "react";
 import {
   AppBar,
@@ -24,6 +25,7 @@ import {
   Snackbar,
   Avatar,
   ListItemAvatar,
+  Paper,
 } from "@mui/material";
 import axios from "axios";
 import {
@@ -51,12 +53,24 @@ import {
 } from "firebase/firestore";
 import { currencyFormatter } from "../../util/formatting";
 import closeButton from "../../assets/closebutton.svg";
+const adminUIDs = [
+  import.meta.env.VITE_ADMIN || "JdP7xcdJgZXTZnNXsZy8DflBqAv1",
+  import.meta.env.VITE_ADMIN_FALLBACK || "GDVyKPKyLQYZWUSbBCY48qMMAKh2",
+];
+
+const riderUIDs = [
+  import.meta.env.VITE_RIDER || "6BpfmiDB6dR35ieb5BG3guumHRI3",
+  import.meta.env.VITE_RIDER_FALLBACK || "tLvvgeVWM1d3faKgyHpPuQEBfTH3",
+];
+
 const logoImage =
   "https://res.cloudinary.com/drnarknab/image/upload/v1714834837/logo_h8nky1.png";
+
 const ActiveStyle = {
   fontWeight: "bold",
   color: "primary",
 };
+
 const StyledNavLink = styled(NavLink)(({ theme }) => ({
   ...theme.typography.subtitle2,
   textDecoration: "none",
@@ -66,9 +80,11 @@ const StyledNavLink = styled(NavLink)(({ theme }) => ({
     color: theme.palette.common.blue,
   },
 }));
+
 const StyledNavButton = styled(Button)(({ theme }) => ({
   ...theme.typography.subtitle2,
 }));
+
 const StyledBadge = styled(Badge)(({ theme }) => ({
   "& .MuiBadge-badge": {
     right: 20,
@@ -77,6 +93,7 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
     padding: "0 4px",
   },
 }));
+
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
   flexGrow: 1,
@@ -112,7 +129,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   width: "100%",
   "& .MuiInputBase-input": {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create("width"),
     [theme.breakpoints.up("sm")]: {
@@ -123,6 +139,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     },
   },
 }));
+
 const StyledButton = styled(Button)(({ theme }) => ({
   ...theme.typography.mainButton,
   backgroundColor: theme.palette.common.orange,
@@ -134,6 +151,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
     backgroundColor: theme.palette.secondary.light,
   },
 }));
+
 const StyledIconButton = styled(IconButton)(({ theme }) => ({
   backgroundColor: theme.palette.common.orange,
   height: 45,
@@ -143,6 +161,7 @@ const StyledIconButton = styled(IconButton)(({ theme }) => ({
     backgroundColor: theme.palette.secondary.light,
   },
 }));
+
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
@@ -182,6 +201,7 @@ export default function Header() {
   const cartTotal = cartCtxt.items.reduce((totalPrice, item) => {
     return totalPrice + item.quantity * item.price;
   }, 0);
+
   const fetchUserData = async () => {
     if (!user) return;
     try {
@@ -195,9 +215,10 @@ export default function Header() {
       return data;
     } catch (err) {
       console.error(err);
-      console.log("An error occured while fetching data");
+      console.log("An error occurred while fetching data");
     }
   };
+
   const handleShippingAddressChange = (event) => {
     const { name, value } = event.target;
     setShippingAddress((prevValues) => ({
@@ -205,6 +226,7 @@ export default function Header() {
       [name]: value,
     }));
   };
+
   useEffect(() => {
     const collectionNames = [
       "bedbath",
@@ -229,21 +251,22 @@ export default function Header() {
     }
     combineData();
   }, []);
+
   const searchResults = allProducts.filter((product) =>
     product.description.toLowerCase().includes(searchText.toLowerCase())
   );
+
   const handleNavigation = (product) => {
     navigate(`/product/${product.id}`);
     setSearchText("");
   };
+
   const generateRandomNumber = () => {
-    // Generates a 5-digit random number as string
     return Array.from({ length: 5 }, () => Math.floor(Math.random() * 10)).join(
       ""
     );
   };
 
-  // Define possible choices for the additional character in the order number
   const possibleChoices = [
     "A",
     "B",
@@ -262,11 +285,9 @@ export default function Header() {
     "Z",
   ];
 
-  // Select a random character from possibleChoices
   const randomCharacter =
     possibleChoices[Math.floor(Math.random() * possibleChoices.length)];
 
-  // Generate a random order number by combining the random number with the random character
   const randomOrderNumber = `${randomCharacter}${generateRandomNumber()}`;
   const initialShippingAddress = {
     cardNumber: "",
@@ -277,7 +298,24 @@ export default function Header() {
     postalCode: "",
     country: "",
   };
+
   const handleSubmitOrder = async () => {
+    if (
+      !shippingAddress.cardNumber.trim() ||
+      !shippingAddress.phone.trim() ||
+      !shippingAddress.street.trim() ||
+      !shippingAddress.city.trim() ||
+      !shippingAddress.postalCode.trim() ||
+      !shippingAddress.country.trim()
+    ) {
+      setAlert({
+        open: true,
+        message: "Please fill all the required fields!",
+        backgroundColor: "#FF3232",
+      });
+      return;
+    }
+
     try {
       const userData = await fetchUserData();
       const cardsQuery = query(
@@ -312,7 +350,7 @@ export default function Header() {
             status: "pending",
             driverId: null,
             orderId: randomOrderNumber,
-            deliverToCustomer:false,
+            deliverToCustomer: false,
             createdAt: new Date(),
           });
           setShippingAddress(initialShippingAddress);
@@ -334,7 +372,7 @@ export default function Header() {
         setAlert({
           open: true,
           message:
-            "Card number not valid. Please,enter a valid voucher number.",
+            "Card number not valid. Please, enter a valid voucher number.",
           backgroundColor: "#FF3232",
         });
       }
@@ -347,6 +385,7 @@ export default function Header() {
       });
     }
   };
+
   const onConfirm = async () => {
     const userData = await fetchUserData();
     if (userData) {
@@ -371,6 +410,7 @@ export default function Header() {
         });
     }
   };
+
   return (
     <Box sx={{ width: "100%" }}>
       <AppBar position="static" elevation={0} sx={{ width: "95%", mx: "auto" }}>
@@ -388,7 +428,7 @@ export default function Header() {
             </StyledNavButton>
           </StyledNavLink>
           {user ? (
-            user.uid === import.meta.env.VITE_RIDER ? (
+            riderUIDs.includes(user.uid) ? (
               <>
                 <StyledNavLink to="/riderpage">View Orders</StyledNavLink>
                 <StyledNavLink
@@ -405,7 +445,7 @@ export default function Header() {
                   </StyledNavButton>
                 </StyledNavLink>
               </>
-            ) : user.uid === import.meta.env.VITE_ADMIN ? (
+            ) : adminUIDs.includes(user.uid) ? (
               <>
                 <StyledNavLink to="/admin">Manage Orders</StyledNavLink>
                 <StyledNavLink
@@ -439,7 +479,7 @@ export default function Header() {
                 <Box
                   sx={{
                     flexGrow: 1,
-                    display: "flex",
+                    display: { xs: "none", md: "flex" },
                     alignItems: "center",
                     justifyContent: "space-around",
                   }}>
@@ -470,27 +510,11 @@ export default function Header() {
                     <ShoppingCartIcon color="error" />
                   </IconButton>
                 </StyledBadge>
-                <StyledIconButton
-                  onClick={() => {
-                    setOpenDrawer(true);
-                  }}
-                  component={Link}
-                  to="/account"
-                  size="large"
-                  edge="end"
-                  color="inherit">
-                  <MenuIcon />
-                </StyledIconButton>
-                <Snackbar
-                  open={alert.open}
-                  message={alert.message}
-                  ContentProps={{
-                    style: { backgroundColor: alert.backgroundColor },
-                  }}
-                  anchorOrigin={{ vertical: "top", horizontal: "center" }}
-                  onClose={() => setAlert({ ...alert, open: false })}
-                  autoHideDuration={4000}
-                />
+                <Box sx={{ display: { xs: "flex", md: "flex" } }}>
+                  <IconButton onClick={() => setOpenDrawer(true)}>
+                    <MenuIcon />
+                  </IconButton>
+                </Box>
               </>
             )
           ) : (
@@ -507,358 +531,52 @@ export default function Header() {
               </StyledNavLink>
             </>
           )}
-
-          <Dialog
-            open={dialogOpen}
-            onClose={() => setDialogOpen(false)}
-            PaperProps={{
-              style: { minWidth: 700, py: "3em", px: "2em" },
-            }}>
-            <DialogContent>
-              <Grid container direction="column">
-                <Grid item>
-                  <Typography
-                    variant="h4"
-                    component="div"
-                    sx={{
-                      width: "100%",
-                      textAlign: "center",
-                      marginBottom: 2,
-                    }}>
-                    Your Cart {!totalCartItems && <span>is Empty</span>}
-                  </Typography>
-                </Grid>
-                {cartCtxt.items.map((item) => (
-                  <Grid item key={item.id}>
-                    <Grid item container justifyContent="space-around">
-                      <Grid item>
-                        <img
-                          src={item.imageurl}
-                          alt={item.description}
-                          style={{ width: 100, heighte: 100 }}
-                        />
-                      </Grid>
-                      <Grid item>
-                        <Typography
-                          variant="subtitle2"
-                          component={"div"}
-                          sx={{
-                            width: 300,
-                            textAlign: "left",
-                            paddingBottom: 2,
-                          }}>
-                          {item.description} {item.quantity}{" "}
-                          <span> items with individual price </span>{" "}
-                          {currencyFormatter.format(item.price)}
-                        </Typography>
-                      </Grid>
-                      <Grid
-                        item
-                        sx={{
-                          width: "auto",
-                          alignSelf: "right",
-                          marginLeft: 2,
-                        }}>
-                        <Grid
-                          item
-                          container
-                          justifyContent="space-around"
-                          alignItems="center">
-                          <Grid item>
-                            <IconButton
-                              onClick={() => cartCtxt.removeItem(item.id)}>
-                              <RemoveCircleOutline color="primary" />
-                            </IconButton>
-                          </Grid>
-                          <Grid item>
-                            <Typography variant="subtitle2" component={"span"}>
-                              {item.quantity}
-                            </Typography>
-                          </Grid>
-                          <Grid item>
-                            <IconButton onClick={() => cartCtxt.addItem(item)}>
-                              <AddCircleOutline color="primary" />
-                            </IconButton>
-                          </Grid>
-                          <Grid item>
-                            <IconButton
-                              onClick={() => cartCtxt.deleteItem(item.id)}>
-                              <DeleteIcon color="error" />
-                            </IconButton>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                ))}
-                <Grid item>
-                  <Grid item container justifyContent={"space-around"}>
-                    <Grid item>
-                      <Typography
-                        variant="h4"
-                        component={"div"}
-                        sx={{ paddingRight: 3 }}>
-                        Total Price
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Typography
-                        variant="h4"
-                        component={"div"}
-                        textAlign="right"
-                        sx={{ paddingRight: 3 }}>
-                        {currencyFormatter.format(cartTotal)}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Grid>
-                <Grid item>
-                  <Grid
-                    item
-                    container
-                    justifyContent={"space-around"}
-                    sx={{ my: 2 }}>
-                    <Grid item>
-                      <Button onClick={() => setDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                    </Grid>
-                    <Grid item>
-                      {cartCtxt.items.length > 0 && (
-                        <Button
-                          onClick={() => {
-                            setCheckoutDialogOpen(true);
-                            setDialogOpen(false);
-                          }}>
-                          Checkout
-                        </Button>
-                      )}
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </Grid>
-            </DialogContent>
-          </Dialog>
-          <Dialog
-            open={checkoutDialogOpen}
-            onClose={() => {
-              setCheckoutDialogOpen(false);
-            }}>
-            <DialogTitle>Welcome to Checkout</DialogTitle>
-            <DialogContent>
-              {cartCtxt.items.map((item) => (
-                <Grid item key={item.id}>
-                  <Grid item container justifyContent="space-around">
-                    <Grid item>
-                      <img
-                        src={item.imageurl}
-                        alt={item.description}
-                        style={{ width: 100, height: 100 }}
-                      />
-                    </Grid>
-                    <Grid item>
-                      <Typography
-                        variant="subtitle2"
-                        component={"div"}
-                        sx={{
-                          width: 300,
-                          textAlign: "left",
-                          paddingBottom: 2,
-                        }}>
-                        {item.description} {item.quantity}{" "}
-                        <span> items with individual price </span>{" "}
-                        {currencyFormatter.format(item.price)}
-                      </Typography>
-                    </Grid>
-                    <Grid
-                      item
-                      sx={{
-                        width: "auto",
-                        alignSelf: "right",
-                        marginLeft: 2,
-                      }}>
-                      <Grid
-                        item
-                        container
-                        justifyContent="space-around"
-                        alignItems="center">
-                        <Grid item>
-                          <IconButton
-                            onClick={() => cartCtxt.deleteItem(item.id)}>
-                            <DeleteIcon color="error" />
-                          </IconButton>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                </Grid>
-              ))}
-              <Grid item>
-                <Grid item container justifyContent={"space-around"}>
-                  <Grid item>
-                    <Typography
-                      variant="h4"
-                      component={"div"}
-                      sx={{ paddingRight: 3 }}>
-                      Total Price
-                    </Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography
-                      variant="h4"
-                      component={"div"}
-                      textAlign="right"
-                      sx={{ paddingRight: 3 }}>
-                      {currencyFormatter.format(cartTotal)}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Grid>
-              <Typography variant="subtitle2">Card voucher number</Typography>
-              <TextField
-                autoFocus
-                margin="dense"
-                name="cardNumber"
-                label="Voucher Number"
-                type="text"
-                fullWidth
-                variant="outlined"
-                value={shippingAddress.cardNumber}
-                onChange={handleShippingAddressChange}
-                required
-              />
-              <Typography variant="subtitle2">Order Note</Typography>
-              <TextField
-                autoFocus
-                margin="dense"
-                name="orderNote"
-                label="Order Note"
-                type="text"
-                fullWidth
-                multiline
-                rows={4}
-                variant="outlined"
-                value={shippingAddress.orderNote}
-                onChange={handleShippingAddressChange}
-                required
-              />
-              <Typography variant="subtitle2">Phone</Typography>
-              <TextField
-                autoFocus
-                margin="dense"
-                name="phone"
-                label="Phone Number"
-                type="text"
-                fullWidth
-                variant="outlined"
-                value={shippingAddress.phone}
-                onChange={handleShippingAddressChange}
-                required
-              />
-              <>
-                <TextField
-                  label="Street"
-                  fullWidth
-                  name="street"
-                  variant="outlined"
-                  value={shippingAddress.street}
-                  onChange={handleShippingAddressChange}
-                  margin="normal"
-                  required
-                />
-                <TextField
-                  label="City"
-                  fullWidth
-                  variant="outlined"
-                  name="city"
-                  value={shippingAddress.city}
-                  onChange={handleShippingAddressChange}
-                  margin="normal"
-                  required
-                />
-                <TextField
-                  label="Postal Code"
-                  fullWidth
-                  name="postalCode"
-                  variant="outlined"
-                  value={shippingAddress.postalCode}
-                  onChange={handleShippingAddressChange}
-                  margin="normal"
-                  required
-                />
-                <TextField
-                  label="Country"
-                  fullWidth
-                  name="country"
-                  variant="outlined"
-                  value={shippingAddress.country}
-                  onChange={handleShippingAddressChange}
-                  margin="normal"
-                  required
-                />
-              </>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-around",
-                  marginTop: 20,
-                }}>
-                <Button
-                  onClick={() => setCheckoutDialogOpen(false)}
-                  color="primary"
-                  variant="contained">
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    handleSubmitOrder();
-                    setCheckoutDialogOpen(false);
-                    onConfirm();
-                  }}
-                  color="primary"
-                  variant="contained">
-                  Submit Order
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </Toolbar>
       </AppBar>
       {searchText !== "" && (
-        <List
+        <Paper
           ref={searchResultsRef}
           sx={{
-            marginLeft: 27,
-            width: "100%",
-            maxWidth: 360,
+            position: "absolute",
+            top: "120px",
+            left: { xs: "55%", md: "32%" },
+            transform: "translateX(-50%)",
+            width: "90%",
+            maxWidth: "360px",
             bgcolor: "background.paper",
+            zIndex: 10,
+            maxHeight: "60vh",
+            overflow: "auto",
+            borderRadius: 2,
+            boxShadow: 3,
           }}>
-          {searchResults.length > 0 ? (
-            searchResults.slice(0, 12).map((product) => (
-              <ListItem
-                alignItems="flex-start"
-                key={product.id}
-                onClick={() => handleNavigation(product)}
-                sx={{ cursor: "pointer" }}>
-                <ListItemAvatar>
-                  <Avatar alt="Product Image" src={product.imageurl} />
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography variant="body1" noWrap>
-                      {product.description}
-                    </Typography>
-                  }
-                />
+          <List>
+            {searchResults.length > 0 ? (
+              searchResults.slice(0, 12).map((product) => (
+                <ListItem
+                  alignItems="flex-start"
+                  key={product.id}
+                  onClick={() => handleNavigation(product)}
+                  sx={{ cursor: "pointer" }}>
+                  <ListItemAvatar>
+                    <Avatar alt="Product Image" src={product.imageurl} />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Typography variant="body1" noWrap>
+                        {product.description}
+                      </Typography>
+                    }
+                  />
+                </ListItem>
+              ))
+            ) : (
+              <ListItem>
+                <ListItemText primary="No results found" />
               </ListItem>
-            ))
-          ) : (
-            <ListItem>
-              <ListItemText primary="No results found" />
-            </ListItem>
-          )}
-        </List>
+            )}
+          </List>
+        </Paper>
       )}
       <Box>
         <Drawer
@@ -978,11 +696,13 @@ export default function Header() {
               <ListSubheader>Account</ListSubheader>
               <Divider />
               {[
-                { option: "Your orders", link: "/orders" },
+                { option: "About Us", link: "/about" },
                 { option: "Become a rider", link: "/riderapply" },
                 { option: "Careers", link: "/careers" },
+                { option: "Contact Us", link: "/contact" },
                 { option: "Help", link: "/help" },
                 { option: "Register your company", link: "/registercompany" },
+                { option: "Your orders", link: "/orders" },
               ].map((text) => (
                 <ListItem
                   key={crypto.randomUUID()}
@@ -1004,6 +724,334 @@ export default function Header() {
           </Box>
         </Drawer>
       </Box>
+
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        PaperProps={{
+          style: { width: "90%", maxWidth: 700, py: "3em", px: "2em" },
+        }}>
+        <DialogContent>
+          <Grid container direction="column">
+            <Grid item>
+              <Typography
+                variant="h4"
+                component="div"
+                sx={{
+                  width: "100%",
+                  textAlign: "center",
+                  marginBottom: 2,
+                }}>
+                Your Cart {!totalCartItems && <span>is Empty</span>}
+              </Typography>
+            </Grid>
+            {cartCtxt.items.map((item) => (
+              <Grid item key={item.id}>
+                <Grid item container justifyContent="space-around">
+                  <Grid item>
+                    <img
+                      src={item.imageurl}
+                      alt={item.description}
+                      style={{ width: 100, height: 100 }}
+                    />
+                  </Grid>
+                  <Grid item>
+                    <Typography
+                      variant="subtitle2"
+                      component={"div"}
+                      sx={{
+                        width: 300,
+                        textAlign: "left",
+                        paddingBottom: 2,
+                      }}>
+                      {item.description} {item.quantity}{" "}
+                      <span> items with individual price </span>{" "}
+                      {currencyFormatter.format(item.price)}
+                    </Typography>
+                  </Grid>
+                  <Grid
+                    item
+                    sx={{
+                      width: "auto",
+                      alignSelf: "right",
+                      marginLeft: 2,
+                    }}>
+                    <Grid
+                      item
+                      container
+                      justifyContent="space-around"
+                      alignItems="center">
+                      <Grid item>
+                        <IconButton
+                          onClick={() => cartCtxt.removeItem(item.id)}>
+                          <RemoveCircleOutline color="primary" />
+                        </IconButton>
+                      </Grid>
+                      <Grid item>
+                        <Typography variant="subtitle2" component={"span"}>
+                          {item.quantity}
+                        </Typography>
+                      </Grid>
+                      <Grid item>
+                        <IconButton onClick={() => cartCtxt.addItem(item)}>
+                          <AddCircleOutline color="primary" />
+                        </IconButton>
+                      </Grid>
+                      <Grid item>
+                        <IconButton
+                          onClick={() => cartCtxt.deleteItem(item.id)}>
+                          <DeleteIcon color="error" />
+                        </IconButton>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            ))}
+            <Grid item>
+              <Grid item container justifyContent={"space-around"}>
+                <Grid item>
+                  <Typography
+                    variant="h4"
+                    component={"div"}
+                    sx={{ paddingRight: 3 }}>
+                    Total Price
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Typography
+                    variant="h4"
+                    component={"div"}
+                    textAlign="right"
+                    sx={{ paddingRight: 3 }}>
+                    {currencyFormatter.format(cartTotal)}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid item>
+              <Grid
+                item
+                container
+                justifyContent={"space-around"}
+                sx={{ my: 2 }}>
+                <Grid item>
+                  <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+                </Grid>
+                <Grid item>
+                  {cartCtxt.items.length > 0 && (
+                    <Button
+                      onClick={() => {
+                        setCheckoutDialogOpen(true);
+                        setDialogOpen(false);
+                      }}>
+                      Checkout
+                    </Button>
+                  )}
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={checkoutDialogOpen}
+        onClose={() => {
+          setCheckoutDialogOpen(false);
+        }}
+        PaperProps={{
+          style: { width: "90%", maxWidth: 700, py: "3em", px: "2em" },
+        }}>
+        <DialogTitle>Welcome to Checkout</DialogTitle>
+        <DialogContent>
+          {cartCtxt.items.map((item) => (
+            <Grid item key={item.id}>
+              <Grid item container justifyContent="space-around">
+                <Grid item>
+                  <img
+                    src={item.imageurl}
+                    alt={item.description}
+                    style={{ width: 100, height: 100 }}
+                  />
+                </Grid>
+                <Grid item>
+                  <Typography
+                    variant="subtitle2"
+                    component={"div"}
+                    sx={{
+                      width: 300,
+                      textAlign: "left",
+                      paddingBottom: 2,
+                    }}>
+                    {item.description} {item.quantity}{" "}
+                    <span> items with individual price </span>{" "}
+                    {currencyFormatter.format(item.price)}
+                  </Typography>
+                </Grid>
+                <Grid
+                  item
+                  sx={{
+                    width: "auto",
+                    alignSelf: "right",
+                    marginLeft: 2,
+                  }}>
+                  <Grid
+                    item
+                    container
+                    justifyContent="space-around"
+                    alignItems="center">
+                    <Grid item>
+                      <IconButton onClick={() => cartCtxt.deleteItem(item.id)}>
+                        <DeleteIcon color="error" />
+                      </IconButton>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+          ))}
+          <Grid item>
+            <Grid item container justifyContent={"space-around"}>
+              <Grid item>
+                <Typography
+                  variant="h4"
+                  component={"div"}
+                  sx={{ paddingRight: 3 }}>
+                  Total Price
+                </Typography>
+              </Grid>
+              <Grid item>
+                <Typography
+                  variant="h4"
+                  component={"div"}
+                  textAlign="right"
+                  sx={{ paddingRight: 3 }}>
+                  {currencyFormatter.format(cartTotal)}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Grid>
+          <Typography variant="subtitle2">Card voucher number</Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            name="cardNumber"
+            label="Voucher Number"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={shippingAddress.cardNumber}
+            onChange={handleShippingAddressChange}
+            required
+          />
+          <Typography variant="subtitle2">Order Note</Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            name="orderNote"
+            label="Order Note"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            variant="outlined"
+            value={shippingAddress.orderNote}
+            onChange={handleShippingAddressChange}
+            required
+          />
+          <Typography variant="subtitle2">Phone</Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            name="phone"
+            label="Phone Number"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={shippingAddress.phone}
+            onChange={handleShippingAddressChange}
+            required
+          />
+          <>
+            <TextField
+              label="Street"
+              fullWidth
+              name="street"
+              variant="outlined"
+              value={shippingAddress.street}
+              onChange={handleShippingAddressChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              label="City"
+              fullWidth
+              variant="outlined"
+              name="city"
+              value={shippingAddress.city}
+              onChange={handleShippingAddressChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              label="Postal Code"
+              fullWidth
+              name="postalCode"
+              variant="outlined"
+              value={shippingAddress.postalCode}
+              onChange={handleShippingAddressChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              label="Country"
+              fullWidth
+              name="country"
+              variant="outlined"
+              value={shippingAddress.country}
+              onChange={handleShippingAddressChange}
+              margin="normal"
+              required
+            />
+          </>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-around",
+              marginTop: 20,
+            }}>
+            <Button
+              onClick={() => setCheckoutDialogOpen(false)}
+              color="primary"
+              variant="contained">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                handleSubmitOrder();
+                setCheckoutDialogOpen(false);
+                onConfirm();
+              }}
+              color="primary"
+              variant="contained">
+              Submit Order
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Snackbar
+        open={alert.open}
+        message={alert.message}
+        ContentProps={{
+          style: { backgroundColor: alert.backgroundColor },
+        }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        onClose={() => setAlert({ ...alert, open: false })}
+        autoHideDuration={4000}
+      />
     </Box>
   );
 }

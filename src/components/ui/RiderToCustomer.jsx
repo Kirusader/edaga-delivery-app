@@ -111,7 +111,7 @@ const RiderToCustomer = ({ order, handleDeliver }) => {
               color="success"
               disabled={!checked}
               onClick={() => {
-                handleDeliver(order.id);
+                handleDeliver();
               }}>
               {checked ? "Deliver To Customer" : "Tick To Continue"}
             </Button>

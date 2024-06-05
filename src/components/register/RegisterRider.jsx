@@ -69,7 +69,7 @@ const RegisterRider = () => {
           phone: formData.phone,
           vehicleType: formData.vehicleType,
         });
-        setError("Application submitted successfully!");
+        setError("");
         setOpenSnackbar(true);
         // Reset form
         setFormData({
@@ -90,23 +90,34 @@ const RegisterRider = () => {
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
   };
+
+  const getSnackbarColor = () => {
+    return error ? "#FF3232" : "#4CAF50"; // Red for error, Green for success
+  };
+
   return (
     <Grid
       container
       direction="column"
-      sx={{ width: "70%", mx: "auto" }}
+      sx={{ width: { xs: "90%", md: "70%" }, mx: "auto" }}
       justifyContent="center">
       <Grid item>
         <Grid item container direction={"column"} alignItems={"center"}>
           <Grid item>
-            <img src={RidersPhotoImg} alt="riders photo" />
+            <img
+              src={RidersPhotoImg}
+              alt="riders photo"
+              style={{ width: "100%", maxWidth: "600px" }}
+            />
           </Grid>
           <Grid item sx={{ my: 2 }}>
-            <Typography variant="h4">Tell us about yourself</Typography>
+            <Typography variant="h4" align="center">
+              Tell us about yourself
+            </Typography>
           </Grid>
 
           <Grid item>
-            <Typography variant="subtitle2">
+            <Typography variant="subtitle2" align="center">
               Please ensure that the first and last name you use to apply
               matches exactly with the first and last name on your govt. issued
               ID
@@ -228,13 +239,13 @@ const RegisterRider = () => {
             </Button>
             <Snackbar
               ContentProps={{
-                style: { backgroundColor: "#FF3232" },
+                style: { backgroundColor: getSnackbarColor() },
               }}
               anchorOrigin={{ vertical: "top", horizontal: "center" }}
               open={openSnackbar}
               autoHideDuration={6000}
               onClose={handleCloseSnackbar}
-              message={error}
+              message={error || "Application submitted successfully!"}
             />
           </Grid>
         </Grid>

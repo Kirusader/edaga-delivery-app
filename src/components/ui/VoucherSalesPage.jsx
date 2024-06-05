@@ -57,15 +57,24 @@ function VoucherSalesPage() {
         alignItems={"center"}
         sx={{ my: 2 }}>
         <Grid item>
-          <Typography variant="h4" gutterBottom>
+          <Typography variant="h4" align="center" gutterBottom>
             Edaga Market Voucher Cards
           </Typography>
         </Grid>
         <Grid item>
-          <img src={cardsImage} alt="Voucher Cards" />
+          <img
+            src={cardsImage}
+            alt="Voucher Cards"
+            height={"auto"}
+            width={"90%"}
+            style={{ alignSelf: "center", marginLeft: 16 }}
+          />
         </Grid>
         <Grid item>
-          <Typography variant="h4" sx={{ fontFamily: "Pacifico", my: 2 }}>
+          <Typography
+            variant="h4"
+            align="center"
+            sx={{ fontFamily: "Pacifico", my: 2 }}>
             Purchase a voucher card today and enjoy shopping with us!
           </Typography>
         </Grid>
@@ -88,11 +97,11 @@ function VoucherSalesPage() {
             Check Balance
           </Button>
           {balance && (
-            <Typography variant="h5" sx={{ mt: 2 }}>
+            <Typography variant="h5" align="center" sx={{ mt: 2 }}>
               {balance}
             </Typography>
           )}
-          {validity && <Typography variant="h5">{validity}</Typography>}
+          {validity && <Typography variant="h5" align="center">{validity}</Typography>}
           {error && (
             <Alert severity="error" sx={{ mt: 2 }}>
               {error}
