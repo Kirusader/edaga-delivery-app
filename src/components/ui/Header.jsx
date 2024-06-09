@@ -581,8 +581,9 @@ export default function Header() {
       <Box>
         <Drawer
           sx={{
+            paddingBottom: 2,
             "& .MuiDrawer-paper": {
-              width: 350,
+              width: { xs: "80%", sm: "70%", md: 350 },
               height: "auto",
               bgcolor: "background.paper",
               border: "1px solid #ccc",
@@ -680,6 +681,9 @@ export default function Header() {
                       minHeight: 48,
                       justifyContent: openDrawer ? "initial" : "center",
                       px: 2.5,
+                    }}
+                    onClick={() => {
+                      setOpenDrawer(false);
                     }}>
                     <ListItemText primary={text.option} />
                     <Divider />
@@ -692,17 +696,18 @@ export default function Header() {
                 width: "100%",
                 maxWidth: 360,
                 bgcolor: "background.paper",
+                height: "auto",
               }}>
               <ListSubheader>Account</ListSubheader>
               <Divider />
               {[
-                { option: "About Us", link: "/about" },
+                { option: "Your orders", link: "/orders" },
                 { option: "Become a rider", link: "/riderapply" },
+                { option: "Register your company", link: "/registercompany" },
                 { option: "Careers", link: "/careers" },
+                { option: "About Us", link: "/about" },
                 { option: "Contact Us", link: "/contact" },
                 { option: "Help", link: "/help" },
-                { option: "Register your company", link: "/registercompany" },
-                { option: "Your orders", link: "/orders" },
               ].map((text) => (
                 <ListItem
                   key={crypto.randomUUID()}
@@ -714,6 +719,9 @@ export default function Header() {
                       minHeight: 48,
                       justifyContent: openDrawer ? "initial" : "center",
                       px: 2.5,
+                    }}
+                    onClick={() => {
+                      setOpenDrawer(false);
                     }}>
                     <ListItemText primary={text.option} />
                     <Divider />
@@ -780,7 +788,8 @@ export default function Header() {
                       item
                       container
                       justifyContent="space-around"
-                      alignItems="center">
+                      alignItems="center"
+                      spacing={{ xs: 2, sm: 3, md: 4 }}>
                       <Grid item>
                         <IconButton
                           onClick={() => cartCtxt.removeItem(item.id)}>
